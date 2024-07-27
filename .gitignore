@@ -1,4 +1,5 @@
 .DS_Store
 *.tar.xz
 *.h5
+*.pt
 venv/
