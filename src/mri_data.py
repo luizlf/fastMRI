@@ -217,7 +217,10 @@ class CombinedSliceDataset(torch.utils.data.Dataset):
 
 
 class filter_raw_sample:
-    def call(self, raw_sample):
+    def __init__(self):
+        pass
+
+    def call(self, raw_sample=None):
         return True
 
 
@@ -281,7 +284,7 @@ class SliceDataset(torch.utils.data.Dataset):
         )
         self.raw_samples = []
         if raw_sample_filter is None:
-            self.raw_sample_filter = filter_raw_sample()
+            self.raw_sample_filter = filter_raw_sample.call
         else:
             self.raw_sample_filter = raw_sample_filter
 

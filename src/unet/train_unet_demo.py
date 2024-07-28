@@ -11,10 +11,11 @@ from argparse import ArgumentParser
 
 import pytorch_lightning as pl
 
-from fastmri.data.mri_data import fetch_dir
+from src.mri_data import fetch_dir
 from fastmri.data.subsample import create_mask_for_mask_type
-from fastmri.data.transforms import UnetDataTransform
-from fastmri.pl_modules import FastMriDataModule, UnetModule
+from src.transforms import UnetDataTransform
+from src.data_module import FastMriDataModule
+from src.unet.unet_module import UnetModule
 
 
 def cli_main(args):

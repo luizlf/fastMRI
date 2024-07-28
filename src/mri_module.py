@@ -22,7 +22,11 @@ class DistributedMetricSum(Metric):
     def __init__(self, dist_sync_on_step=True):
         super().__init__(dist_sync_on_step=dist_sync_on_step)
 
-        self.add_state("quantity", default=torch.tensor(0.0), dist_reduce_fx="sum")
+        self.add_state(
+            "quantity",
+            default=torch.tensor(0.0, dtype=torch.float32),
+            dist_reduce_fx="sum",
+        )
 
     def update(self, batch: torch.Tensor):  # type: ignore
         self.quantity += batch
@@ -131,13 +135,14 @@ class MriModule(pl.LightningModule):
             target = val_logs["target"][i].cpu().numpy()
 
             mse_vals[fname][slice_num] = torch.tensor(
-                evaluate.mse(target, output)
+                evaluate.mse(target, output), dtype=torch.float32
             ).view(1)
             target_norms[fname][slice_num] = torch.tensor(
-                evaluate.mse(target, np.zeros_like(target))
+                evaluate.mse(target, np.zeros_like(target)), dtype=torch.float32
             ).view(1)
             ssim_vals[fname][slice_num] = torch.tensor(
-                evaluate.ssim(target[None, ...], output[None, ...], maxval=maxval)
+                evaluate.ssim(target[None, ...], output[None, ...], maxval=maxval),
+                dtype=torch.float32,
             ).view(1)
             max_vals[fname] = maxval
 
@@ -191,10 +196,12 @@ class MriModule(pl.LightningModule):
         for fname in mse_vals.keys():
             local_examples = local_examples + 1
             mse_val = torch.mean(
-                torch.cat([v.view(-1) for _, v in mse_vals[fname].items()])
+                torch.cat([v.view(-1) for _, v in mse_vals[fname].items()]),
+                dtype=torch.float32,
             )
             target_norm = torch.mean(
-                torch.cat([v.view(-1) for _, v in target_norms[fname].items()])
+                torch.cat([v.view(-1) for _, v in target_norms[fname].items()]),
+                dtype=torch.float32,
             )
             metrics["nmse"] = metrics["nmse"] + mse_val / target_norm
             metrics["psnr"] = (
@@ -208,7 +215,8 @@ class MriModule(pl.LightningModule):
                 - 10 * torch.log10(mse_val)
             )
             metrics["ssim"] = metrics["ssim"] + torch.mean(
-                torch.cat([v.view(-1) for _, v in ssim_vals[fname].items()])
+                torch.cat([v.view(-1) for _, v in ssim_vals[fname].items()]),
+                dtype=torch.float32,
             )
 
         # reduce across ddp via sum
@@ -216,9 +224,9 @@ class MriModule(pl.LightningModule):
         metrics["ssim"] = self.SSIM(metrics["ssim"])
         metrics["psnr"] = self.PSNR(metrics["psnr"])
         tot_examples = self.TotExamples(torch.tensor(local_examples))
-        val_loss = self.ValLoss(torch.sum(torch.cat(losses)))
+        val_loss = self.ValLoss(torch.sum(torch.cat(losses), dtype=torch.float32))
         tot_slice_examples = self.TotSliceExamples(
-            torch.tensor(len(losses), dtype=torch.float)
+            torch.tensor(len(losses), dtype=torch.float32)
         )
 
         self.log("validation_loss", val_loss / tot_slice_examples, prog_bar=True)
