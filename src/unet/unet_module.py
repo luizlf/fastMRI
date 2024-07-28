@@ -26,7 +26,7 @@ class SSIM(nn.Module):
         NP = win_size**2
         self.cov_norm = NP / (NP - 1)
 
-    def forward(self, X, Y, data_range):
+    def forward(self, X, Y, data_range, mask=None):
         data_range = data_range[:, None, None, None]
 
         C1 = (self.k1 * data_range)**2
@@ -39,12 +39,28 @@ class SSIM(nn.Module):
         uyy = F.conv2d(Y * Y, w)
         uxy = F.conv2d(X * Y, w)
 
+        # print('X shape: ', X.shape)
+        # print('Y shape: ', Y.shape)
+        # print('w shape: ', w.shape)
+        # print('ux shape: ', ux.shape)
+        # print('uy shape: ', uy.shape)
+        # print('uxx shape: ', uxx.shape)
+        # print('uyy shape: ', uyy.shape)
+        # print('uxy shape: ', uxy.shape)
+
+
         vx = self.cov_norm * (uxx - ux * ux)
         vy = self.cov_norm * (uyy - uy * uy)
         vxy = self.cov_norm * (uxy - ux * uy)
         A1, A2, B1, B2 = (2 * ux * uy + C1, 2 * vxy + C2, ux ** 2 + uy ** 2 + C1, vx + vy + C2)
         D = B1 * B2
         S = (A1 * A2) / D
+
+        if mask is not None:
+            mask_resized = F.interpolate(mask.unsqueeze(1).float(), size=torch.Size([314, 314]), mode='bilinear', align_corners=False)
+            mask_resized = mask_resized.squeeze(1)
+            S = S * mask_resized
+
         return S.mean()
     
 
@@ -69,6 +85,7 @@ class UnetModule(MriModule):
         lr_step_size=40,
         lr_gamma=0.1,
         weight_decay=0.0,
+        roi_weight=0.1,
         **kwargs,
     ):
         """
@@ -89,6 +106,7 @@ class UnetModule(MriModule):
                 0.1.
             weight_decay (float, optional): Parameter for penalizing weights
                 norm. Defaults to 0.0.
+            roi_weight (float, optional): Weight for the region of interest (0.1 means 10% higher weight to the annotated ROI).
         """
         super().__init__(**kwargs)
         self.save_hyperparameters()
@@ -102,6 +120,7 @@ class UnetModule(MriModule):
         self.lr_step_size = lr_step_size
         self.lr_gamma = lr_gamma
         self.weight_decay = weight_decay
+        self.roi_weight = roi_weight
 
         self.unet = Unet(
             in_chans=self.in_chans,
@@ -110,18 +129,31 @@ class UnetModule(MriModule):
             num_pool_layers=self.num_pool_layers,
             drop_prob=self.drop_prob,
         )
+        self.ssim = SSIM()
 
     def forward(self, image):
         return self.unet(image.unsqueeze(1)).squeeze(1)
+    
+
+    def create_mask(self, annotation, shape, device):
+        if annotation['x'].item() == -1:
+            return torch.ones(shape, device=device)
+        else:
+            mask = torch.ones(shape, device=device)
+            x, y, w, h = annotation['x'], annotation['y'], annotation['width'], annotation['height']
+            if x >= 0 and y >= 0 and w > 0 and h > 0:
+                mask[..., y:y+h, x:x+w] = (1 + self.roi_weight)
+            return mask
 
     def training_step(self, batch, batch_idx):
         # print('batch shape: ', batch.shape)
-        print('batch image shape: ', batch.image.shape)
-        print('batch target shape: ', batch.target.shape)
+        # print('batch image shape: ', batch.image.shape)
+        # print('batch target shape: ', batch.target.shape)
 
         output = self(batch.image)
         # loss = F.l1_loss(output, batch.target)
-        loss = 1 - SSIM()(output, batch.target, batch.max_value)
+        mask = self.create_mask(batch.annotation, output.shape, output.device)
+        loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask)
         # print('loss: ', loss)
 
         self.log("loss", loss.detach())
@@ -131,6 +163,8 @@ class UnetModule(MriModule):
         output = self(batch.image)
         mean = batch.mean.unsqueeze(1).unsqueeze(2)
         std = batch.std.unsqueeze(1).unsqueeze(2)
+        mask = self.create_mask(batch.annotation, output.shape, output.device)
+        val_loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask)
 
         return {
             "batch_idx": batch_idx,
@@ -140,7 +174,7 @@ class UnetModule(MriModule):
             "output": output * std + mean,
             "target": batch.target * std + mean,
             # "val_loss": F.l1_loss(output, batch.target),
-            "val_loss": 1 - SSIM()(output, batch.target, batch.max_value),
+            "val_loss": val_loss,
         }
 
     def test_step(self, batch, batch_idx):
@@ -212,6 +246,12 @@ class UnetModule(MriModule):
             default=0.0,
             type=float,
             help="Strength of weight decay regularization",
+        )
+        parser.add_argument(
+            "--roi_weight",
+            default=0.1,
+            type=float,
+            help="Weight for the region of interest (0.1 means 10 percent higher weight to the annotated ROI)",
         )
 
         return parser
