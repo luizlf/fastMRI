@@ -14,3 +14,5 @@ data/singlecoil_val/
 data/singlecoil_test/
 data/knee_mri_clinical_seq/
 data/knee_mri_clinical_seq_batch2/
+logs/
+.vscode/
