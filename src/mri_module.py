@@ -71,6 +71,9 @@ class MriModule(pl.LightningModule):
 
     def validation_step_end(self, val_logs):
         # check inputs
+        # print('\n ---------------------------------------')
+        # print('VALIDATION STEP END')
+        # print('\n ---------------------------------------')
         for k in (
             "batch_idx",
             "fname",
@@ -141,15 +144,25 @@ class MriModule(pl.LightningModule):
             ).view(1)
             max_vals[fname] = maxval
 
-        self.validation_step_outputs.append(val_logs)
+        
 
-        return {
+        val_logs = {
             "val_loss": val_logs["val_loss"],
             "mse_vals": dict(mse_vals),
             "target_norms": dict(target_norms),
             "ssim_vals": dict(ssim_vals),
             "max_vals": max_vals,
         }
+        self.validation_step_outputs.append(val_logs)
+        return val_logs
+
+        # return {
+        #     "val_loss": val_logs["val_loss"],
+        #     "mse_vals": dict(mse_vals),
+        #     "target_norms": dict(target_norms),
+        #     "ssim_vals": dict(ssim_vals),
+        #     "max_vals": max_vals,
+        # }
 
     def log_image(self, name, image):
         self.logger.experiment.add_image(name, image, global_step=self.global_step)
@@ -162,12 +175,16 @@ class MriModule(pl.LightningModule):
         ssim_vals = defaultdict(dict)
         max_vals = dict()
 
-        val_logs = self.validation_step_outputs[-1]
+        val_logs = self.validation_step_outputs #[-1]
 
+        # print('\nval_logs: ', val_logs)
         # use dict updates to handle duplicate slices
         for val_log in val_logs:
+            print('\nval_log keys: ', val_log.keys())
+            # print('\nval_log type: ', type(val_log))
             losses.append(val_log["val_loss"].view(-1))
 
+            # ['batch_idx', 'fname', 'slice_num', 'max_value', 'output', 'target', 'val_loss']
             for k in val_log["mse_vals"].keys():
                 mse_vals[k].update(val_log["mse_vals"][k])
             for k in val_log["target_norms"].keys():
