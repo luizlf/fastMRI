@@ -433,6 +433,7 @@ class AnnotatedSliceDataset(SliceDataset):
         dataset_cache_file: Union[str, Path, os.PathLike] = "dataset_cache.pkl",
         num_cols: Optional[Tuple[int]] = None,
         annotation_version: Optional[str] = None,
+        raw_sample_filter: Optional[Callable] = None,
     ):
         """
         Args:
@@ -477,6 +478,7 @@ class AnnotatedSliceDataset(SliceDataset):
             volume_sample_rate,
             dataset_cache_file,
             num_cols,
+            raw_sample_filter,
         )
 
         annotated_raw_samples: List[FastMRIRawDataSample] = []

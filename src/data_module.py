@@ -13,13 +13,13 @@ import pytorch_lightning as pl
 import torch
 
 import fastmri
-from src.mri_data import CombinedSliceDataset, SliceDataset
+from src.mri_data import CombinedSliceDataset, SliceDataset, AnnotatedSliceDataset
 
 
 def worker_init_fn(worker_id):
     """Handle random seeding for all mask_func."""
     worker_info = torch.utils.data.get_worker_info()
-    data: Union[SliceDataset, CombinedSliceDataset] = (
+    data: Union[AnnotatedSliceDataset, CombinedSliceDataset] = (
         worker_info.dataset
     )  # pylint: disable=no-member
 
@@ -224,7 +224,7 @@ class FastMriDataModule(pl.LightningDataModule):
                 raw_sample_filter = self.test_filter
 
         # if desired, combine train and val together for the train split
-        dataset: Union[SliceDataset, CombinedSliceDataset]
+        dataset: Union[AnnotatedSliceDataset, CombinedSliceDataset]
         if is_train and self.combine_train_val:
             data_paths = [
                 self.data_path / f"{self.challenge}_train",
@@ -252,7 +252,16 @@ class FastMriDataModule(pl.LightningDataModule):
             else:
                 data_path = self.data_path / f"{self.challenge}_{data_partition}"
 
-            dataset = SliceDataset(
+            # dataset = SliceDataset(
+            #     root=data_path,
+            #     transform=data_transform,
+            #     sample_rate=sample_rate,
+            #     volume_sample_rate=volume_sample_rate,
+            #     challenge=self.challenge,
+            #     use_dataset_cache=self.use_dataset_cache_file,
+            #     raw_sample_filter=raw_sample_filter,
+            # )
+            dataset = AnnotatedSliceDataset(
                 root=data_path,
                 transform=data_transform,
                 sample_rate=sample_rate,
@@ -260,7 +269,10 @@ class FastMriDataModule(pl.LightningDataModule):
                 challenge=self.challenge,
                 use_dataset_cache=self.use_dataset_cache_file,
                 raw_sample_filter=raw_sample_filter,
+                subsplit='knee',
+                multiple_annotation_policy='all',
             )
+            
 
         # ensure that entire volumes go to the same GPU in the ddp setting
         sampler = None
@@ -306,13 +318,23 @@ class FastMriDataModule(pl.LightningDataModule):
                 # NOTE: Fixed so that val and test use correct sample rates
                 sample_rate = self.sample_rate  # if i == 0 else 1.0
                 volume_sample_rate = self.volume_sample_rate  # if i == 0 else None
-                _ = SliceDataset(
+                # _ = SliceDataset(
+                #     root=data_path,
+                #     transform=data_transform,
+                #     sample_rate=sample_rate,
+                #     volume_sample_rate=volume_sample_rate,
+                #     challenge=self.challenge,
+                #     use_dataset_cache=self.use_dataset_cache_file,
+                # )
+                _ = AnnotatedSliceDataset(
                     root=data_path,
                     transform=data_transform,
                     sample_rate=sample_rate,
                     volume_sample_rate=volume_sample_rate,
                     challenge=self.challenge,
                     use_dataset_cache=self.use_dataset_cache_file,
+                    subsplit='knee',
+                    multiple_annotation_policy='all',
                 )
 
     def train_dataloader(self):

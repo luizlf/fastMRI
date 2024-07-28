@@ -83,11 +83,14 @@ class UnetModule(MriModule):
         return self.unet(image.unsqueeze(1)).squeeze(1)
 
     def training_step(self, batch, batch_idx):
+        # print('batch shape: ', batch.shape)
+        print('batch image shape: ', batch.image.shape)
+        print('batch target shape: ', batch.target.shape)
+
         output = self(batch.image)
         loss = F.l1_loss(output, batch.target)
 
         self.log("loss", loss.detach())
-
         return loss
 
     def validation_step(self, batch, batch_idx):
