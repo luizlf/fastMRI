@@ -9,12 +9,44 @@ from argparse import ArgumentParser
 
 import torch
 from torch.nn import functional as F
+from torch import nn
 
 # from fastmri.models import Unet
 from src.unet.unet import Unet
 
 from src.mri_module import MriModule
 
+
+class SSIM(nn.Module):
+    def __init__(self, win_size=7, k1=0.01, k2=0.03):
+        super().__init__()
+        self.win_size = win_size
+        self.k1, self.k2 = k1, k2
+        self.register_buffer('w', torch.ones(1, 1, win_size, win_size) / win_size**2)
+        NP = win_size**2
+        self.cov_norm = NP / (NP - 1)
+
+    def forward(self, X, Y, data_range):
+        data_range = data_range[:, None, None, None]
+
+        C1 = (self.k1 * data_range)**2
+        C2 = (self.k2 * data_range)**2
+
+        w = self.w.to(X.device)
+        ux = F.conv2d(X, w)
+        uy = F.conv2d(Y, w)
+        uxx = F.conv2d(X * X, w)
+        uyy = F.conv2d(Y * Y, w)
+        uxy = F.conv2d(X * Y, w)
+
+        vx = self.cov_norm * (uxx - ux * ux)
+        vy = self.cov_norm * (uyy - uy * uy)
+        vxy = self.cov_norm * (uxy - ux * uy)
+        A1, A2, B1, B2 = (2 * ux * uy + C1, 2 * vxy + C2, ux ** 2 + uy ** 2 + C1, vx + vy + C2)
+        D = B1 * B2
+        S = (A1 * A2) / D
+        return S.mean()
+    
 
 class UnetModule(MriModule):
     """
@@ -88,7 +120,9 @@ class UnetModule(MriModule):
         print('batch target shape: ', batch.target.shape)
 
         output = self(batch.image)
-        loss = F.l1_loss(output, batch.target)
+        # loss = F.l1_loss(output, batch.target)
+        loss = 1 - SSIM()(output, batch.target, batch.max_value)
+        # print('loss: ', loss)
 
         self.log("loss", loss.detach())
         return loss
@@ -105,7 +139,8 @@ class UnetModule(MriModule):
             "max_value": batch.max_value,
             "output": output * std + mean,
             "target": batch.target * std + mean,
-            "val_loss": F.l1_loss(output, batch.target),
+            # "val_loss": F.l1_loss(output, batch.target),
+            "val_loss": 1 - SSIM()(output, batch.target, batch.max_value),
         }
 
     def test_step(self, batch, batch_idx):
