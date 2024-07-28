@@ -57,6 +57,7 @@ class MriModule(pl.LightningModule):
             num_log_images: Number of images to log. Defaults to 16.
         """
         super().__init__()
+        self.validation_step_outputs = []
 
         self.num_log_images = num_log_images
         self.val_log_indices = None
@@ -140,6 +141,8 @@ class MriModule(pl.LightningModule):
             ).view(1)
             max_vals[fname] = maxval
 
+        self.validation_step_outputs.append(val_logs)
+
         return {
             "val_loss": val_logs["val_loss"],
             "mse_vals": dict(mse_vals),
@@ -151,13 +154,15 @@ class MriModule(pl.LightningModule):
     def log_image(self, name, image):
         self.logger.experiment.add_image(name, image, global_step=self.global_step)
 
-    def validation_epoch_end(self, val_logs):
+    def on_validation_epoch_end(self):
         # aggregate losses
         losses = []
         mse_vals = defaultdict(dict)
         target_norms = defaultdict(dict)
         ssim_vals = defaultdict(dict)
         max_vals = dict()
+
+        val_logs = self.validation_step_outputs[-1]
 
         # use dict updates to handle duplicate slices
         for val_log in val_logs:
@@ -219,6 +224,8 @@ class MriModule(pl.LightningModule):
         self.log("validation_loss", val_loss / tot_slice_examples, prog_bar=True)
         for metric, value in metrics.items():
             self.log(f"val_metrics/{metric}", value / tot_examples)
+
+        self.validation_step_outputs.clear()
 
     def test_epoch_end(self, test_logs):
         outputs = defaultdict(dict)

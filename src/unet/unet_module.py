@@ -11,7 +11,7 @@ import torch
 from torch.nn import functional as F
 
 # from fastmri.models import Unet
-from unet import Unet
+from src.unet.unet import Unet
 
 from src.mri_module import MriModule
 
