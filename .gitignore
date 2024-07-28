@@ -4,3 +4,5 @@
 *.pt
 *.dcm
 venv/
+*.pyc
+__pycache__/
