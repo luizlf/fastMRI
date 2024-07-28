@@ -149,8 +149,6 @@ class MriModule(pl.LightningModule):
             ).view(1)
             max_vals[fname] = maxval
 
-        
-
         val_logs = {
             "val_loss": val_logs["val_loss"],
             "mse_vals": dict(mse_vals),
@@ -180,12 +178,11 @@ class MriModule(pl.LightningModule):
         ssim_vals = defaultdict(dict)
         max_vals = dict()
 
-        val_logs = self.validation_step_outputs #[-1]
+        val_logs = self.validation_step_outputs  # [-1]
 
         # print('\nval_logs: ', val_logs)
         # use dict updates to handle duplicate slices
         for val_log in val_logs:
-            print('\nval_log keys: ', val_log.keys())
             # print('\nval_log type: ', type(val_log))
             losses.append(val_log["val_loss"].view(-1))
 

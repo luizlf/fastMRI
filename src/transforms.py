@@ -332,10 +332,12 @@ class UnetDataTransform:
             target, the mean used for normalization, the standard deviations
             used for normalization, the filename, and the slice number.
         """
+
         kspace_torch = to_tensor(kspace)
 
         # check for max value
         max_value = attrs["max"] if "max" in attrs.keys() else 0.0
+        max_value = max_value.astype(np.float32)
 
         # apply mask
         if self.mask_func:
