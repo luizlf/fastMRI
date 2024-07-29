@@ -242,12 +242,12 @@ class SpatialAttention(nn.Module):
         x = self.conv(x)
         attention_map = self.sigmoid(x)
 
-        if roi is not None:
-            for r in roi:
-                x, y, w, h = r
-                roi_attention = torch.ones_like(attention_map)
-                roi_attention[:, :, y:y+h, x:x+w] *= self.roi_weight
-                attention_map = attention_map * roi_attention
+        # if roi is not None:
+        #     for r in roi:
+        #         x, y, w, h = r
+        #         roi_attention = torch.ones_like(attention_map)
+        #         roi_attention[:, :, y:y+h, x:x+w] *= self.roi_weight
+        #         attention_map = attention_map * roi_attention
 
         return attention_map
 
