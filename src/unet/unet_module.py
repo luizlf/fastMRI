@@ -86,6 +86,7 @@ class UnetModule(MriModule):
         lr_gamma=0.1,
         weight_decay=0.0,
         roi_weight=0.1,
+        attn_layer=False,
         **kwargs,
     ):
         """
@@ -121,6 +122,7 @@ class UnetModule(MriModule):
         self.lr_gamma = lr_gamma
         self.weight_decay = weight_decay
         self.roi_weight = roi_weight
+        self.attn_layer = attn_layer
 
         self.unet = Unet(
             in_chans=self.in_chans,
@@ -128,11 +130,13 @@ class UnetModule(MriModule):
             chans=self.chans,
             num_pool_layers=self.num_pool_layers,
             drop_prob=self.drop_prob,
+            roi_weight=self.roi_weight,
+            attn_layer=self.attn_layer,
         )
         self.ssim = SSIM()
 
-    def forward(self, image):
-        return self.unet(image.unsqueeze(1)).squeeze(1)
+    def forward(self, image, roi=None):
+        return self.unet(image.unsqueeze(1), roi).squeeze(1)
     
 
     def create_mask(self, annotation, shape, device):
@@ -146,21 +150,20 @@ class UnetModule(MriModule):
             return mask
 
     def training_step(self, batch, batch_idx):
-        # print('batch shape: ', batch.shape)
-        # print('batch image shape: ', batch.image.shape)
-        # print('batch target shape: ', batch.target.shape)
-
-        output = self(batch.image)
+        roi = [(batch.annotation['x'].item(), batch.annotation['y'].item(), batch.annotation['width'].item(), batch.annotation['height'].item())]
+        output = self(batch.image, roi)
+        # output = self.forward(batch.image)
         # loss = F.l1_loss(output, batch.target)
         mask = self.create_mask(batch.annotation, output.shape, output.device)
         loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask)
-        # print('loss: ', loss)
 
         self.log("loss", loss.detach())
         return loss
 
     def validation_step(self, batch, batch_idx):
-        output = self(batch.image)
+        roi = [(batch.annotation['x'].item(), batch.annotation['y'].item(), batch.annotation['width'].item(), batch.annotation['height'].item())]
+        output = self(batch.image, roi=roi)
+        # output = self.forward(batch.image)
         mean = batch.mean.unsqueeze(1).unsqueeze(2)
         std = batch.std.unsqueeze(1).unsqueeze(2)
         mask = self.create_mask(batch.annotation, output.shape, output.device)
@@ -178,7 +181,9 @@ class UnetModule(MriModule):
         }
 
     def test_step(self, batch, batch_idx):
-        output = self.forward(batch.image)
+        roi = [(batch.annotation['x'].item(), batch.annotation['y'].item(), batch.annotation['width'].item(), batch.annotation['height'].item())]
+        output = self.forward(batch.image, roi=roi)
+        # output = self.forward(batch.image)
         mean = batch.mean.unsqueeze(1).unsqueeze(2)
         std = batch.std.unsqueeze(1).unsqueeze(2)
 
@@ -252,6 +257,12 @@ class UnetModule(MriModule):
             default=0.1,
             type=float,
             help="Weight for the region of interest (0.1 means 10 percent higher weight to the annotated ROI)",
+        )
+        parser.add_argument(
+            "--attn_layer",
+            default=False,
+            type=bool,
+            help="Add attention layer to the U-Net",
         )
 
         return parser
