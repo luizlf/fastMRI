@@ -85,6 +85,7 @@ class UnetModule(MriModule):
         lr_step_size=40,
         lr_gamma=0.1,
         weight_decay=0.0,
+        metric="ssim",
         roi_weight=0.1,
         attn_layer=False,
         **kwargs,
@@ -121,6 +122,7 @@ class UnetModule(MriModule):
         self.lr_step_size = lr_step_size
         self.lr_gamma = lr_gamma
         self.weight_decay = weight_decay
+        self.metric = metric
         self.roi_weight = roi_weight
         self.attn_layer = attn_layer
 
@@ -133,7 +135,9 @@ class UnetModule(MriModule):
             roi_weight=self.roi_weight,
             attn_layer=self.attn_layer,
         )
-        self.ssim = SSIM()
+
+        if self.metric == "ssim":
+            self.ssim = SSIM()
 
     def forward(self, image, roi=None):
         return self.unet(image.unsqueeze(1), roi).squeeze(1)
@@ -154,8 +158,11 @@ class UnetModule(MriModule):
         output = self(batch.image, roi)
         # output = self.forward(batch.image)
         # loss = F.l1_loss(output, batch.target)
-        mask = self.create_mask(batch.annotation, output.shape, output.device)
-        loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask)
+        if self.metric == "l1":
+            loss = F.l1_loss(output, batch.target)
+        elif self.metric == "ssim":
+            mask = self.create_mask(batch.annotation, output.shape, output.device)
+            loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask)
 
         self.log("loss", loss.detach())
         return loss
@@ -166,8 +173,11 @@ class UnetModule(MriModule):
         # output = self.forward(batch.image)
         mean = batch.mean.unsqueeze(1).unsqueeze(2)
         std = batch.std.unsqueeze(1).unsqueeze(2)
-        mask = self.create_mask(batch.annotation, output.shape, output.device)
-        val_loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask)
+        if self.metric == "l1":
+            val_loss = F.l1_loss(output, batch.target)
+        elif self.metric == "ssim":
+            mask = self.create_mask(batch.annotation, output.shape, output.device)
+            val_loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask)
 
         return {
             "batch_idx": batch_idx,
