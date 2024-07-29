@@ -51,18 +51,18 @@ class Unet(nn.Module):
         # Not sure it will work. Adding CBAM to the model
         self.down_sample_layers = nn.ModuleList([ConvBlock(in_chans, chans, drop_prob)])
         if self.attn_layer:
-            self.cbam_down = nn.ModuleList([CBAM(chans, roi_weight=self.roi_weight)])
+            self.cbam_down = nn.ModuleList([CBAM(chans)])
 
         ch = chans
         for _ in range(num_pool_layers - 1):
             self.down_sample_layers.append(ConvBlock(ch, ch * 2, drop_prob))
             if self.attn_layer:
-                self.cbam_down.append(CBAM(ch * 2, roi_weight=self.roi_weight))
+                self.cbam_down.append(CBAM(ch * 2))
             ch *= 2
 
         self.conv = ConvBlock(ch, ch * 2, drop_prob)
         if self.attn_layer:
-            self.cbam_bottleneck = CBAM(ch * 2, roi_weight=self.roi_weight)
+            self.cbam_bottleneck = CBAM(ch * 2)
 
         self.up_conv = nn.ModuleList()
         self.up_transpose_conv = nn.ModuleList()
@@ -73,7 +73,7 @@ class Unet(nn.Module):
             self.up_transpose_conv.append(TransposeConvBlock(ch * 2, ch))
             self.up_conv.append(ConvBlock(ch * 2, ch, drop_prob))
             if self.attn_layer:
-                self.cbam_up.append(CBAM(ch * 2, roi_weight=self.roi_weight))
+                self.cbam_up.append(CBAM(ch * 2))
             ch //= 2
 
         self.up_transpose_conv.append(TransposeConvBlock(ch * 2, ch))
@@ -84,9 +84,9 @@ class Unet(nn.Module):
             )
         )
         if self.attn_layer:
-            self.cbam_up.append(CBAM(ch * 2, roi_weight=self.roi_weight))
+            self.cbam_up.append(CBAM(ch * 2))
 
-    def forward(self, image: torch.Tensor, roi=None) -> torch.Tensor:
+    def forward(self, image: torch.Tensor) -> torch.Tensor:
         """
         Args:
             image: Input 4D tensor of shape `(N, in_chans, H, W)`.
@@ -101,7 +101,7 @@ class Unet(nn.Module):
         if self.attn_layer:
             for layer, cbam in zip(self.down_sample_layers, self.cbam_down):
                 output = layer(output)
-                output = cbam(output, roi)
+                output = cbam(output)
                 stack.append(output)
                 output = F.avg_pool2d(output, kernel_size=2, stride=2, padding=0)
         else:
@@ -127,7 +127,7 @@ class Unet(nn.Module):
                     output = F.pad(output, padding, "reflect")
 
                 output = torch.cat([output, downsample_layer], dim=1)
-                output = cbam(output, roi)
+                output = cbam(output)
                 output = conv(output)
         else:
             for transpose_conv, conv in zip(self.up_transpose_conv, self.up_conv):
@@ -228,14 +228,14 @@ class TransposeConvBlock(nn.Module):
 
 
 class SpatialAttention(nn.Module):
-    def __init__(self, kernel_size=7, roi_weight=0.1):
+    def __init__(self, kernel_size=7):
         super(SpatialAttention, self).__init__()
         padding = kernel_size // 2
-        self.roi_weight = roi_weight
+        # self.roi_weight = roi_weight
         self.conv = nn.Conv2d(2, 1, kernel_size, padding=padding, bias=False)
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x, roi=None):
+    def forward(self, x):
         avg_out = torch.mean(x, dim=1, keepdim=True)
         max_out, _ = torch.max(x, dim=1, keepdim=True)
         x = torch.cat([avg_out, max_out], dim=1)
@@ -272,12 +272,12 @@ class ChannelAttention(nn.Module):
     
 
 class CBAM(nn.Module):
-    def __init__(self, in_planes, ratio=16, kernel_size=7, roi_weight=0.1):
+    def __init__(self, in_planes, ratio=16, kernel_size=7):
         super(CBAM, self).__init__()
         self.ca = ChannelAttention(in_planes, ratio)
-        self.sa = SpatialAttention(kernel_size, roi_weight)
+        self.sa = SpatialAttention(kernel_size)
 
-    def forward(self, x, roi=None):
+    def forward(self, x):
         x = x * self.ca(x)
-        x = x * self.sa(x, roi)
+        x = x * self.sa(x)
         return x

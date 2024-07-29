@@ -39,16 +39,6 @@ class SSIM(nn.Module):
         uyy = F.conv2d(Y * Y, w)
         uxy = F.conv2d(X * Y, w)
 
-        # print('X shape: ', X.shape)
-        # print('Y shape: ', Y.shape)
-        # print('w shape: ', w.shape)
-        # print('ux shape: ', ux.shape)
-        # print('uy shape: ', uy.shape)
-        # print('uxx shape: ', uxx.shape)
-        # print('uyy shape: ', uyy.shape)
-        # print('uxy shape: ', uxy.shape)
-
-
         vx = self.cov_norm * (uxx - ux * ux)
         vy = self.cov_norm * (uyy - uy * uy)
         vxy = self.cov_norm * (uxy - ux * uy)
@@ -139,8 +129,8 @@ class UnetModule(MriModule):
         if self.metric == "ssim":
             self.ssim = SSIM()
 
-    def forward(self, image, roi=None):
-        return self.unet(image.unsqueeze(1), roi).squeeze(1)
+    def forward(self, image):
+        return self.unet(image.unsqueeze(1)).squeeze(1)
     
 
     def create_mask(self, annotation, shape, device):
@@ -154,10 +144,7 @@ class UnetModule(MriModule):
             return mask
 
     def training_step(self, batch, batch_idx):
-        roi = [(batch.annotation['x'].item(), batch.annotation['y'].item(), batch.annotation['width'].item(), batch.annotation['height'].item())]
-        output = self(batch.image, roi)
-        # output = self.forward(batch.image)
-        # loss = F.l1_loss(output, batch.target)
+        output = self(batch.image)
         if self.metric == "l1":
             loss = F.l1_loss(output, batch.target)
         elif self.metric == "ssim":
@@ -168,9 +155,7 @@ class UnetModule(MriModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        roi = [(batch.annotation['x'].item(), batch.annotation['y'].item(), batch.annotation['width'].item(), batch.annotation['height'].item())]
-        output = self(batch.image, roi=roi)
-        # output = self.forward(batch.image)
+        output = self(batch.image)
         mean = batch.mean.unsqueeze(1).unsqueeze(2)
         std = batch.std.unsqueeze(1).unsqueeze(2)
         if self.metric == "l1":
@@ -191,9 +176,7 @@ class UnetModule(MriModule):
         }
 
     def test_step(self, batch, batch_idx):
-        roi = [(batch.annotation['x'].item(), batch.annotation['y'].item(), batch.annotation['width'].item(), batch.annotation['height'].item())]
-        output = self.forward(batch.image, roi=roi)
-        # output = self.forward(batch.image)
+        output = self.forward(batch.image)
         mean = batch.mean.unsqueeze(1).unsqueeze(2)
         std = batch.std.unsqueeze(1).unsqueeze(2)
 
