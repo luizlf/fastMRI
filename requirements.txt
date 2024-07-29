@@ -11,3 +11,4 @@ torchmetrics>=0.5.1
 pandas>=1.3.4
 requests
 matplotlib
+tensorboard
