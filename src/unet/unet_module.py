@@ -22,15 +22,15 @@ class SSIM(nn.Module):
         super().__init__()
         self.win_size = win_size
         self.k1, self.k2 = k1, k2
-        self.register_buffer('w', torch.ones(1, 1, win_size, win_size) / win_size**2)
+        self.register_buffer("w", torch.ones(1, 1, win_size, win_size) / win_size**2)
         NP = win_size**2
         self.cov_norm = NP / (NP - 1)
 
     def forward(self, X, Y, data_range, mask=None):
         data_range = data_range[:, None, None, None]
 
-        C1 = (self.k1 * data_range)**2
-        C2 = (self.k2 * data_range)**2
+        C1 = (self.k1 * data_range) ** 2
+        C2 = (self.k2 * data_range) ** 2
 
         w = self.w.to(X.device)
         ux = F.conv2d(X, w)
@@ -42,17 +42,27 @@ class SSIM(nn.Module):
         vx = self.cov_norm * (uxx - ux * ux)
         vy = self.cov_norm * (uyy - uy * uy)
         vxy = self.cov_norm * (uxy - ux * uy)
-        A1, A2, B1, B2 = (2 * ux * uy + C1, 2 * vxy + C2, ux ** 2 + uy ** 2 + C1, vx + vy + C2)
+        A1, A2, B1, B2 = (
+            2 * ux * uy + C1,
+            2 * vxy + C2,
+            ux**2 + uy**2 + C1,
+            vx + vy + C2,
+        )
         D = B1 * B2
         S = (A1 * A2) / D
 
         if mask is not None:
-            mask_resized = F.interpolate(mask.unsqueeze(1).float(), size=torch.Size([314, 314]), mode='bilinear', align_corners=False)
+            mask_resized = F.interpolate(
+                mask.unsqueeze(1).float(),
+                size=torch.Size([314, 314]),
+                mode="bilinear",
+                align_corners=False,
+            )
             mask_resized = mask_resized.squeeze(1)
             S = S * mask_resized
 
         return S.mean()
-    
+
 
 class UnetModule(MriModule):
     """
@@ -131,24 +141,30 @@ class UnetModule(MriModule):
 
     def forward(self, image):
         return self.unet(image.unsqueeze(1)).squeeze(1)
-    
 
-    def create_mask(self, annotation, shape, device):
-        if annotation['x'].item() == -1:
-            return torch.ones(shape, device=device)
-        else:
-            mask = torch.ones(shape, device=device)
-            x, y, w, h = annotation['x'], annotation['y'], annotation['width'], annotation['height']
-            if x >= 0 and y >= 0 and w > 0 and h > 0:
-                mask[..., y:y+h, x:x+w] = (1 + self.roi_weight)
-            return mask
+    def create_mask(self, annotations, shape, device):
+        mask = torch.ones(shape, device=device)
+        for annotation in annotations:
+            if annotation["x"].item() == -1:
+                mask = torch.ones(shape, device=device)
+            else:
+                mask = torch.ones(shape, device=device)
+                x, y, w, h = (
+                    annotation["x"],
+                    annotation["y"],
+                    annotation["width"],
+                    annotation["height"],
+                )
+                if x >= 0 and y >= 0 and w > 0 and h > 0:
+                    mask[..., y : y + h, x : x + w] += self.roi_weight
+        return mask
 
     def training_step(self, batch, batch_idx):
         output = self(batch.image)
         if self.metric == "l1":
             loss = F.l1_loss(output, batch.target)
         elif self.metric == "ssim":
-            mask = self.create_mask(batch.annotation, output.shape, output.device)
+            mask = self.create_mask(batch.annotations, output.shape, output.device)
             loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask)
 
         self.log("loss", loss.detach())
@@ -161,7 +177,7 @@ class UnetModule(MriModule):
         if self.metric == "l1":
             val_loss = F.l1_loss(output, batch.target)
         elif self.metric == "ssim":
-            mask = self.create_mask(batch.annotation, output.shape, output.device)
+            mask = self.create_mask(batch.annotations, output.shape, output.device)
             val_loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask)
 
         return {

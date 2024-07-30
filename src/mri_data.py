@@ -514,13 +514,17 @@ class AnnotatedSliceDataset(SliceDataset):
                 # multiple annotations
                 # extend raw samples to have tow copies of the same slice,
                 # one for each annotation
+                annotations = []
                 for ind in range(len(annotations_df)):
                     row = annotations_df.iloc[ind]
                     annotation = self.get_annotation(row, maxy)
-                    metadata["annotation"] = annotation
-                    annotated_raw_samples.append(
-                        FastMRIRawDataSample(fname, slice_ind, metadata)
-                    )
+                    annotations.append(annotation)
+                    # metadata["annotation"] = annotation
+                metadata["annotations"] = annotations
+
+                annotated_raw_samples.append(
+                    FastMRIRawDataSample(fname, slice_ind, metadata)
+                )
             else:
                 # only add one annotation
                 if len(annotations_df) == 0:
@@ -534,7 +538,9 @@ class AnnotatedSliceDataset(SliceDataset):
                     random_number = torch.randint(len(annotations_df) - 1, (1,))
                     rows = annotations_df.iloc[random_number]
 
-                metadata["annotation"] = self.get_annotation(rows, maxy)
+                # metadata["annotation"] = self.get_annotation(rows, maxy)
+                annotation = self.get_annotation(rows, maxy)
+                metadata["annotations"] = [annotation]
                 annotated_raw_samples.append(
                     FastMRIRawDataSample(fname, slice_ind, metadata)
                 )

@@ -279,7 +279,8 @@ class UnetSample(NamedTuple):
     fname: str
     slice_num: int
     max_value: float
-    annotation: dict
+    # annotation: dict
+    annotations: list
 
 
 class UnetDataTransform:
@@ -391,7 +392,8 @@ class UnetDataTransform:
             fname=fname,
             slice_num=slice_num,
             max_value=max_value,
-            annotation=attrs["annotation"],
+            # annotation=attrs["annotation"],
+            annotations=attrs["annotations"],
         )
 
 
