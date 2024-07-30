@@ -29,6 +29,16 @@ class SSIM(nn.Module):
     def forward(self, X, Y, data_range, mask=None):
         data_range = data_range[:, None, None, None]
 
+        # X = out, Y = target
+        # dim (1, 320, 320)
+
+        # if there's a RoI mask
+        mask_not_equal = torch.ne(mask, 1)
+        if torch.any(mask_not_equal):
+            mask = mask_not_equal  # mask != 1
+            X = X * mask
+            Y = Y * mask
+
         C1 = (self.k1 * data_range) ** 2
         C2 = (self.k2 * data_range) ** 2
 
@@ -51,6 +61,7 @@ class SSIM(nn.Module):
         D = B1 * B2
         S = (A1 * A2) / D
 
+        """
         if mask is not None:
             mask_resized = F.interpolate(
                 mask.unsqueeze(1).float(),
@@ -60,6 +71,7 @@ class SSIM(nn.Module):
             )
             mask_resized = mask_resized.squeeze(1)
             S = S * mask_resized
+        """
 
         return S.mean()
 
@@ -146,9 +158,10 @@ class UnetModule(MriModule):
         mask = torch.ones(shape, device=device)
         for annotation in annotations:
             if annotation["x"].item() == -1:
-                mask = torch.ones(shape, device=device)
+                pass
+                # mask = torch.ones(shape, device=device)
             else:
-                mask = torch.ones(shape, device=device)
+                # mask = torch.ones(shape, device=device)
                 x, y, w, h = (
                     annotation["x"],
                     annotation["y"],
