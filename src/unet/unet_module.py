@@ -26,18 +26,19 @@ class SSIM(nn.Module):
         NP = win_size**2
         self.cov_norm = NP / (NP - 1)
 
-    def forward(self, X, Y, data_range, mask=None):
+    def forward(self, X, Y, data_range, mask=None, use_roi=False):
         data_range = data_range[:, None, None, None]
 
         # X = out, Y = target
         # dim (1, 320, 320)
 
         # if there's a RoI mask
-        mask_not_equal = torch.ne(mask, 1)
-        if torch.any(mask_not_equal):
-            mask = mask_not_equal  # mask != 1
-            X = X * mask
-            Y = Y * mask
+        if use_roi:
+            mask_not_equal = torch.ne(mask, 1)
+            if torch.any(mask_not_equal):
+                mask = mask_not_equal
+                X = X * mask
+                Y = Y * mask
 
         C1 = (self.k1 * data_range) ** 2
         C2 = (self.k2 * data_range) ** 2
@@ -100,6 +101,7 @@ class UnetModule(MriModule):
         metric="ssim",
         roi_weight=0.1,
         attn_layer=False,
+        use_roi=False,
         **kwargs,
     ):
         """
@@ -137,6 +139,7 @@ class UnetModule(MriModule):
         self.metric = metric
         self.roi_weight = roi_weight
         self.attn_layer = attn_layer
+        self.use_roi = use_roi
 
         self.unet = Unet(
             in_chans=self.in_chans,
@@ -171,14 +174,27 @@ class UnetModule(MriModule):
                 if x >= 0 and y >= 0 and w > 0 and h > 0:
                     mask[..., y : y + h, x : x + w] += self.roi_weight
         return mask
+    
+    def filter_roi(self, X, Y, mask):
+        mask_not_equal = torch.ne(mask, 1)
+        if torch.any(mask_not_equal):
+            mask = mask_not_equal  # mask != 1
+            X = X * mask
+            Y = Y * mask
+        return X, Y
 
     def training_step(self, batch, batch_idx):
         output = self(batch.image)
         if self.metric == "l1":
-            loss = F.l1_loss(output, batch.target)
+            if self.use_roi:
+                mask = self.create_mask(batch.annotations, output.shape, output.device)
+                output, target = self.filter_roi(output, batch.target, mask)
+                loss = F.l1_loss(output, target)
+            else:
+                loss = F.l1_loss(output, batch.target)
         elif self.metric == "ssim":
             mask = self.create_mask(batch.annotations, output.shape, output.device)
-            loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask)
+            loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask, use_roi=self.use_roi)
 
         self.log("loss", loss.detach())
         return loss
@@ -285,6 +301,12 @@ class UnetModule(MriModule):
             default=False,
             type=bool,
             help="Add attention layer to the U-Net",
+        )
+        parser.add_argument(
+            "--use_roi",
+            default=False,
+            type=bool,
+            help="Use region of interest mask",
         )
 
         return parser
