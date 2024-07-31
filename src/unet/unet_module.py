@@ -29,16 +29,7 @@ class SSIM(nn.Module):
     def forward(self, X, Y, data_range, mask=None, use_roi=False):
         data_range = data_range[:, None, None, None]
 
-        # X = out, Y = target
-        # dim (1, 320, 320)
-
-        # if there's a RoI mask
         if use_roi:
-            # mask_not_equal = torch.ne(mask, 1)
-            # if torch.any(mask_not_equal):
-            #     mask = mask_not_equal
-            #     X = X * mask
-            #     Y = Y * mask
             X = X * mask
             Y = Y * mask
 
@@ -234,6 +225,38 @@ class UnetModule(MriModule):
             "output": output * std + mean,
             "target": batch.target * std + mean,
             # "val_loss": F.l1_loss(output, batch.target),
+            "val_loss": val_loss,
+        }
+    
+
+    def validation_step_comparison(self, batch, batch_idx):
+        output = self(batch.image)
+        mean = batch.mean.unsqueeze(1).unsqueeze(2)
+        std = batch.std.unsqueeze(1).unsqueeze(2)
+        if self.metric == "l1":
+            mask, annot_exists = self.create_mask(batch.annotations, output.shape, output.device)
+            if annot_exists:
+                factor = mask.numel() / mask.sum()
+            else:
+                factor = 1
+            val_loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
+            val_loss_image = F.l1_loss(output, batch.target) 
+            val_loss = val_loss_image + val_loss_mask
+
+        elif self.metric == "ssim":
+            mask, _ = self.create_mask(batch.annotations, output.shape, output.device)
+            val_loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask, use_roi=True)
+
+        # mask, _ = self.create_mask(batch.annotations, output.shape, output.device)
+        # val_loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask, use_roi=True)
+
+        return {
+            "batch_idx": batch_idx,
+            "fname": batch.fname,
+            "slice_num": batch.slice_num,
+            "max_value": batch.max_value,
+            "output": output * std + mean,
+            "target": batch.target * std + mean,
             "val_loss": val_loss,
         }
 
