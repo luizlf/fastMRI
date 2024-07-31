@@ -14,7 +14,16 @@ data/singlecoil_val/
 data/singlecoil_test/
 data/knee_mri_clinical_seq/
 data/knee_mri_clinical_seq_batch2/
-logs/
+
 lightning_logs/
 .vscode/
 .annotation_cache/
+
+logs/unet/*
+!logs/unet/unet_l1/
+
+logs/unet/unet_l1/*
+!logs/unet/unet_l1/checkpoints/
+
+logs/unet/unet_l1/checkpoints/*
+!logs/unet/unet_l1/checkpoints/epoch=9-step=347420.ckpt
