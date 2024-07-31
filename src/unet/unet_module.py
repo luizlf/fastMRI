@@ -233,22 +233,22 @@ class UnetModule(MriModule):
         output = self(batch.image)
         mean = batch.mean.unsqueeze(1).unsqueeze(2)
         std = batch.std.unsqueeze(1).unsqueeze(2)
-        if self.metric == "l1":
-            mask, annot_exists = self.create_mask(batch.annotations, output.shape, output.device)
-            if annot_exists:
-                factor = mask.numel() / mask.sum()
-            else:
-                factor = 1
-            val_loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
-            val_loss_image = F.l1_loss(output, batch.target) 
-            val_loss = val_loss_image + val_loss_mask
+        # if self.metric == "l1":
+        #     mask, annot_exists = self.create_mask(batch.annotations, output.shape, output.device)
+        #     if annot_exists:
+        #         factor = mask.numel() / mask.sum()
+        #     else:
+        #         factor = 1
+        #     val_loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
+        #     val_loss_image = F.l1_loss(output, batch.target) 
+        #     val_loss = val_loss_image + val_loss_mask
 
-        elif self.metric == "ssim":
-            mask, _ = self.create_mask(batch.annotations, output.shape, output.device)
-            val_loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask, use_roi=True)
+        # elif self.metric == "ssim":
+        #     mask, _ = self.create_mask(batch.annotations, output.shape, output.device)
+        #     val_loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask, use_roi=True)
 
-        # mask, _ = self.create_mask(batch.annotations, output.shape, output.device)
-        # val_loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask, use_roi=True)
+        mask, _ = self.create_mask(batch.annotations, output.shape, output.device)
+        val_loss = 1 - SSIM()(output, batch.target, batch.max_value, mask=mask, use_roi=True)
 
         return {
             "batch_idx": batch_idx,
