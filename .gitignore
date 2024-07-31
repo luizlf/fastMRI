@@ -7,6 +7,9 @@
 *.pyo
 *.pyd
 *.pkl
+diff_*.txt
+commits.txt
+commits_rev.txt
 venv/
 __pycache__/
 data/singlecoil_train/
