@@ -34,11 +34,13 @@ class SSIM(nn.Module):
 
         # if there's a RoI mask
         if use_roi:
-            mask_not_equal = torch.ne(mask, 1)
-            if torch.any(mask_not_equal):
-                mask = mask_not_equal
-                X = X * mask
-                Y = Y * mask
+            # mask_not_equal = torch.ne(mask, 1)
+            # if torch.any(mask_not_equal):
+            #     mask = mask_not_equal
+            #     X = X * mask
+            #     Y = Y * mask
+            X = X * mask
+            Y = Y * mask
 
         C1 = (self.k1 * data_range) ** 2
         C2 = (self.k2 * data_range) ** 2
@@ -158,7 +160,8 @@ class UnetModule(MriModule):
         return self.unet(image.unsqueeze(1)).squeeze(1)
 
     def create_mask(self, annotations, shape, device):
-        mask = torch.ones(shape, device=device)
+        annot_exists = True
+        mask = torch.zeros(shape, device=device)
         for annotation in annotations:
             if annotation["x"].item() == -1:
                 pass
@@ -172,28 +175,31 @@ class UnetModule(MriModule):
                     annotation["height"],
                 )
                 if x >= 0 and y >= 0 and w > 0 and h > 0:
-                    mask[..., y : y + h, x : x + w] += self.roi_weight
-        return mask
-    
-    def filter_roi(self, X, Y, mask):
-        mask_not_equal = torch.ne(mask, 1)
-        if torch.any(mask_not_equal):
-            mask = mask_not_equal  # mask != 1
-            X = X * mask
-            Y = Y * mask
-        return X, Y
+                    # mask[..., y : y + h, x : x + w] += self.roi_weight
+                    mask[..., y : y + h, x : x + w] = 1
+        if torch.all(mask == 0):
+            annot_exists = False
+        #     mask = torch.ones(shape, device=device)
+        return mask, annot_exists
 
     def training_step(self, batch, batch_idx):
         output = self(batch.image)
         if self.metric == "l1":
             if self.use_roi:
-                mask = self.create_mask(batch.annotations, output.shape, output.device)
-                output, target = self.filter_roi(output, batch.target, mask)
-                loss = F.l1_loss(output, target)
+                mask, annot_exists = self.create_mask(batch.annotations, output.shape, output.device)
+                if annot_exists:
+                    factor = mask.numel() / mask.sum()
+                else:
+                    factor = 1
+                loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
+                loss_image = F.l1_loss(output, batch.target) 
+                loss = loss_image + loss_mask
+                # print('batch.target * mask max: ', (batch.target * mask).max())
+                # print('batch.target * mask min: ', (batch.target * mask).min())
             else:
-                loss = F.l1_loss(output, batch.target)
+                loss = F.l1_loss(output, batch.target) 
         elif self.metric == "ssim":
-            mask = self.create_mask(batch.annotations, output.shape, output.device)
+            mask, _ = self.create_mask(batch.annotations, output.shape, output.device)
             loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask, use_roi=self.use_roi)
 
         self.log("loss", loss.detach())
@@ -204,10 +210,21 @@ class UnetModule(MriModule):
         mean = batch.mean.unsqueeze(1).unsqueeze(2)
         std = batch.std.unsqueeze(1).unsqueeze(2)
         if self.metric == "l1":
-            val_loss = F.l1_loss(output, batch.target)
+            # val_loss = F.l1_loss(output, batch.target)
+            if self.use_roi:
+                mask, annot_exists = self.create_mask(batch.annotations, output.shape, output.device)
+                if annot_exists:
+                    factor = mask.numel() / mask.sum()
+                else:
+                    factor = 1
+                val_loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
+                val_loss_image = F.l1_loss(output, batch.target) 
+                val_loss = val_loss_image + val_loss_mask
+            else:
+                val_loss = F.l1_loss(output, batch.target)
         elif self.metric == "ssim":
-            mask = self.create_mask(batch.annotations, output.shape, output.device)
-            val_loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask)
+            mask, _ = self.create_mask(batch.annotations, output.shape, output.device)
+            val_loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask, use_roi=self.use_roi)
 
         return {
             "batch_idx": batch_idx,
