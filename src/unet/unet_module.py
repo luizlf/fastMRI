@@ -169,10 +169,12 @@ class UnetModule(MriModule):
                     # mask[..., y : y + h, x : x + w] += self.roi_weight
                     center_x, center_y = x + w / 2, y + h / 2
                     # mask[..., y : y + h, x : x + w] = 1
-                    width = min(75, w*2.5)
-                    height = min(75, h*2.5)
+                    width = min(75, w * 2.5)
+                    height = min(75, h * 2.5)
                     min_x, max_x = max(0, center_x - width), min(center_x + width, 320)
-                    min_y, max_y = max(0, center_y - height), min(center_y + height, 320)
+                    min_y, max_y = max(0, center_y - height), min(
+                        center_y + height, 320
+                    )
                     mask[..., int(min_y) : int(max_y), int(min_x) : int(max_x)] = 1
         if torch.all(mask == 0):
             annot_exists = False
@@ -192,7 +194,7 @@ class UnetModule(MriModule):
                     factor = 1
                 loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
                 loss_image = F.l1_loss(output, batch.target)
-                loss = (loss_image + loss_mask)/2
+                loss = (loss_image + loss_mask) / 2
                 # print('batch.target * mask max: ', (batch.target * mask).max())
                 # print('batch.target * mask min: ', (batch.target * mask).min())
             else:
@@ -275,13 +277,16 @@ class UnetModule(MriModule):
         mask, annot_exist = self.create_mask(
             batch.annotations, output.shape, output.device
         )
+        factor = mask.numel() / mask.sum()
+        if not annot_exist:
+            factor = 1
         val_loss = 1 - SSIM()(
             output, batch.target, batch.max_value, mask=mask, use_roi=True
         )
         image_l1_loss = F.l1_loss(output, batch.target)
         image_ssim_loss = 1 - SSIM()(output, batch.target, batch.max_value)
         if annot_exist:
-            roi_l1_loss = F.l1_loss(output * mask, batch.target * mask)
+            roi_l1_loss = F.l1_loss(output * mask, batch.target * mask) * factor
             roi_ssim_loss = 1 - SSIM()(
                 output, batch.target, batch.max_value, mask=mask, use_roi=True
             )
