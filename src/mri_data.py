@@ -523,7 +523,7 @@ class AnnotatedSliceDataset(SliceDataset):
                     # metadata["annotation"] = annotation
                 metadata["annotations"] = annotations
 
-                if (
+                if not (
                     only_annotated
                     and annotations[0]["x"] != -1
                     and annotations[0]["y"] != -1
