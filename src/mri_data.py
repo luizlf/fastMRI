@@ -511,7 +511,7 @@ class AnnotatedSliceDataset(SliceDataset):
                 & (annotations_csv["slice"] == slice_ind)
             ]
 
-            if len(annotations_df) > 1 and multiple_annotation_policy == "all":
+            if len(annotations_df) >= 1 and multiple_annotation_policy == "all":
                 # multiple annotations
                 # extend raw samples to have tow copies of the same slice,
                 # one for each annotation
