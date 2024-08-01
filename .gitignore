@@ -35,3 +35,4 @@ logs/unet/unet_l1/checkpoints/*
 logs/unet/unet_roi/checkpoints/*
 !logs/unet/unet_l1/checkpoints/epoch=9-step=347420.ckpt
 !logs/unet/unet_roi/checkpoints/epoch=9-step=347420.ckpt
+commit_hist.txt
