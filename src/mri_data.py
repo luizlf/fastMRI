@@ -511,7 +511,7 @@ class AnnotatedSliceDataset(SliceDataset):
                 & (annotations_csv["slice"] == slice_ind)
             ]
 
-            if len(annotations_df) > 1 and multiple_annotation_policy == "all":
+            if len(annotations_df) >= 1 and multiple_annotation_policy == "all":
                 # multiple annotations
                 # extend raw samples to have tow copies of the same slice,
                 # one for each annotation
@@ -522,7 +522,8 @@ class AnnotatedSliceDataset(SliceDataset):
                     annotations.append(annotation)
                     # metadata["annotation"] = annotation
                 metadata["annotations"] = annotations
-
+                if annotations[0]['x'] == -1 or annotations[0]['y'] == -1:
+                    continue
                 annotated_raw_samples.append(
                     FastMRIRawDataSample(fname, slice_ind, metadata)
                 )

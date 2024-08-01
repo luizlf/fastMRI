@@ -154,7 +154,7 @@ class UnetModule(MriModule):
         annot_exists = True
         mask = torch.zeros(shape, device=device)
         for annotation in annotations:
-            if annotation["x"].item() == -1:
+            if annotation["x"].item() == -1 and annotation["y"].item() == -1:
                 pass
                 # mask = torch.ones(shape, device=device)
             else:
@@ -186,7 +186,7 @@ class UnetModule(MriModule):
                     factor = 1
                 loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
                 loss_image = F.l1_loss(output, batch.target)
-                loss = loss_image + loss_mask
+                loss = (loss_image + loss_mask)/2
                 # print('batch.target * mask max: ', (batch.target * mask).max())
                 # print('batch.target * mask min: ', (batch.target * mask).min())
             else:
@@ -209,7 +209,8 @@ class UnetModule(MriModule):
             batch.annotations, output.shape, output.device
         )
         factor = mask.numel() / mask.sum()
-
+        if not annot_exists:
+            factor = 1
         val_loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
         # val_loss_image = F.l1_loss(output, batch.target)
         val_loss = val_loss_mask  # val_loss_image + val_loss_mask
