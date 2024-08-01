@@ -171,8 +171,8 @@ class UnetModule(MriModule):
                     # mask[..., y : y + h, x : x + w] = 1
                     width = min(75, w*2.5)
                     height = min(75, h*2.5)
-                    min_x, max_x = min(0, center_x - width), max(center_x + width, 320)
-                    min_y, max_y = min(0, center_y - height), max(center_y + height, 320)
+                    min_x, max_x = max(0, center_x - width), min(center_x + width, 320)
+                    min_y, max_y = max(0, center_y - height), min(center_y + height, 320)
                     mask[..., int(min_y) : int(max_y), int(min_x) : int(max_x)] = 1
         if torch.all(mask == 0):
             annot_exists = False
