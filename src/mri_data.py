@@ -523,16 +523,10 @@ class AnnotatedSliceDataset(SliceDataset):
                     # metadata["annotation"] = annotation
                 metadata["annotations"] = annotations
 
-                if not (
-                    only_annotated
-                    and annotations[0]["x"] != -1
-                    and annotations[0]["y"] != -1
-                ):
-                    continue
                 annotated_raw_samples.append(
                     FastMRIRawDataSample(fname, slice_ind, metadata)
                 )
-            else:
+            elif not only_annotated:
                 # only add one annotation
                 if len(annotations_df) == 0:
                     # no annotation found
