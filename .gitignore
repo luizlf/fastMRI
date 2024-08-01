@@ -10,6 +10,7 @@
 diff_*.txt
 commits.txt
 commits_rev.txt
+commit_hist.txt
 venv/
 __pycache__/
 data/singlecoil_train/
@@ -23,16 +24,3 @@ lightning_logs/
 .annotation_cache/
 
 logs/unet/*
-!logs/unet/unet_l1/
-!logs/unet/unet_roi/
-
-logs/unet/unet_l1/*
-logs/unet/unet_roi/*
-!logs/unet/unet_l1/checkpoints/
-!logs/unet/unet_roi/checkpoints/
-
-logs/unet/unet_l1/checkpoints/*
-logs/unet/unet_roi/checkpoints/*
-!logs/unet/unet_l1/checkpoints/epoch=9-step=347420.ckpt
-!logs/unet/unet_roi/checkpoints/epoch=9-step=347420.ckpt
-commit_hist.txt
