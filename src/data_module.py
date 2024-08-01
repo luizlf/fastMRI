@@ -106,6 +106,7 @@ class FastMriDataModule(pl.LightningDataModule):
         batch_size: int = 1,
         num_workers: int = 4,
         distributed_sampler: bool = False,
+        only_annotated: bool = False,
     ):
         """
         Args:
@@ -183,6 +184,7 @@ class FastMriDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.distributed_sampler = distributed_sampler
+        self.only_annotated = only_annotated
 
     def _create_data_loader(
         self,
@@ -269,10 +271,10 @@ class FastMriDataModule(pl.LightningDataModule):
                 challenge=self.challenge,
                 use_dataset_cache=self.use_dataset_cache_file,
                 raw_sample_filter=raw_sample_filter,
-                subsplit='knee',
-                multiple_annotation_policy='all',
+                subsplit="knee",
+                multiple_annotation_policy="all",
+                only_annotated=self.only_annotated,
             )
-            
 
         # ensure that entire volumes go to the same GPU in the ddp setting
         sampler = None
@@ -333,8 +335,9 @@ class FastMriDataModule(pl.LightningDataModule):
                     volume_sample_rate=volume_sample_rate,
                     challenge=self.challenge,
                     use_dataset_cache=self.use_dataset_cache_file,
-                    subsplit='knee',
-                    multiple_annotation_policy='all',
+                    subsplit="knee",
+                    multiple_annotation_policy="all",
+                    only_annotated=self.only_annotated,
                 )
 
     def train_dataloader(self):
