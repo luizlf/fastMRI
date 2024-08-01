@@ -23,4 +23,4 @@ lightning_logs/
 .vscode/
 .annotation_cache/
 
-logs/unet/*
+logs/*
