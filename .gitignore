@@ -3,3 +3,12 @@
 *.h5
 *.pt
 venv/
+*.txt
+*.pkl
+*.csv
+*.yaml
+*.zip
+lightning_logs/*
+logs/
+*.pyc
+.vscode/
