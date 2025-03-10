@@ -24,3 +24,4 @@ lightning_logs/
 .annotation_cache/
 
 logs/*
+submission.zip
