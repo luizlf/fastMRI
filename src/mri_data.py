@@ -518,14 +518,15 @@ class AnnotatedSliceDataset(SliceDataset):
                 annotations = []
                 for ind in range(len(annotations_df)):
                     row = annotations_df.iloc[ind]
-                    annotation = self.get_annotation(row, maxy)
+                    annotation = self.get_annotation(row, maxy, slice_ind, fname)
                     annotations.append(annotation)
                     # metadata["annotation"] = annotation
-                metadata["annotations"] = annotations
-                if annotations[0]['x'] == -1 or annotations[0]['y'] == -1:
-                    continue
-                annotated_raw_samples.append(
-                    FastMRIRawDataSample(fname, slice_ind, metadata)
+                for annotation in annotations:
+                    metadata["annotations"] = [annotation]
+                    if annotation['x'] == -1 or annotation['y'] == -1:
+                        continue
+                    annotated_raw_samples.append(
+                        FastMRIRawDataSample(fname, slice_ind, metadata)
                 )
             elif not only_annotated:
                 # only add one annotation
@@ -541,7 +542,7 @@ class AnnotatedSliceDataset(SliceDataset):
                     rows = annotations_df.iloc[random_number]
 
                 # metadata["annotation"] = self.get_annotation(rows, maxy)
-                annotation = self.get_annotation(rows, maxy)
+                annotation = self.get_annotation(rows, maxy, slice_ind, fname)
                 metadata["annotations"] = [annotation]
                 annotated_raw_samples.append(
                     FastMRIRawDataSample(fname, slice_ind, metadata)
@@ -549,11 +550,11 @@ class AnnotatedSliceDataset(SliceDataset):
 
         self.raw_samples = annotated_raw_samples
 
-    def get_annotation(self, row: Optional[pd.Series], maxy: int):
+    def get_annotation(self, row: Optional[pd.Series], maxy: int, slice_ind: int, fname: str):
         if row is None:
             annotation = {
-                "fname": "",
-                "slice": "",
+                "fname": str(fname),
+                "slice": slice_ind,
                 "study_level": "",
                 "x": -1,
                 "y": -1,
@@ -564,7 +565,7 @@ class AnnotatedSliceDataset(SliceDataset):
         elif row.study_level == "Yes":
             annotation = {
                 "fname": str(row.file),
-                "slice": "",
+                "slice": -1,
                 "study_level": "Yes",
                 "x": -1,
                 "y": -1,

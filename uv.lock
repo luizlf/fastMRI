@@ -465,6 +465,7 @@ dependencies = [
     { name = "pandas" },
     { name = "pytest" },
     { name = "pytorch-lightning" },
+    { name = "pywrap" },
     { name = "pyyaml" },
     { name = "requests" },
     { name = "runstats" },
@@ -496,6 +497,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=1.3.4" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytorch-lightning", specifier = "<=1.9" },
+    { name = "pywrap", specifier = ">=0.1.0" },
     { name = "pyyaml", specifier = ">=5.3.1" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "runstats", specifier = ">=1.8" },
@@ -1933,6 +1935,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/2d/7c/917f9c4681bb8d34b
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fb/16/2ab7b3b7f55f3c6929e5f629e1a68362981e4e5fed592a2ed1cb4b4914a5/pywinpty-2.0.15-cp313-cp313-win_amd64.whl", hash = "sha256:ab5920877dd632c124b4ed17bc6dd6ef3b9f86cd492b963ffdb1a67b85b0f408", size = 1405020 },
     { url = "https://files.pythonhosted.org/packages/7c/16/edef3515dd2030db2795dbfbe392232c7a0f3dc41b98e92b38b42ba497c7/pywinpty-2.0.15-cp313-cp313t-win_amd64.whl", hash = "sha256:a4560ad8c01e537708d2790dbe7da7d986791de805d89dd0d3697ca59e9e4901", size = 1404151 },
+]
+
+[[package]]
+name = "pywrap"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/1c/ad/76d6329af2e8bf58a44fe95a8b47041bcb569799c4cb8b0f5bca122fcba2/pywrap-0.1.0.zip", hash = "sha256:cc9a005da83124879b0cbef493d1f89436fc32e27e17fd4803767f4019451379", size = 4485 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/84/72/4b936444e736f963e7923bdd208d0bef40d0ef51e8072119c1a89040cf10/pywrap-0.1.0-py2.py3-none-any.whl", hash = "sha256:5b48afbeba7d394a6188178a3a3feea5e9df617466124c5cdba03b237d36ba1c", size = 3008 },
 ]
 
 [[package]]

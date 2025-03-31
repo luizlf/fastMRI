@@ -153,29 +153,35 @@ class UnetModule(MriModule):
     def create_mask(self, annotations, shape, device):
         annot_exists = True
         mask = torch.zeros(shape, device=device)
-        for annotation in annotations:
-            if annotation["x"].item() == -1 and annotation["y"].item() == -1:
-                pass
-                # mask = torch.ones(shape, device=device)
-            else:
-                # mask = torch.ones(shape, device=device)
-                x, y, w, h = (
-                    annotation["x"],
-                    annotation["y"],
-                    annotation["width"],
-                    annotation["height"],
-                )
-                if x >= 0 and y >= 0 and w > 0 and h > 0:
-                    # mask[..., y : y + h, x : x + w] += self.roi_weight
-                    center_x, center_y = x + w / 2, y + h / 2
-                    # mask[..., y : y + h, x : x + w] = 1
-                    width = min(75, w * 2.5)
-                    height = min(75, h * 2.5)
-                    min_x, max_x = max(0, center_x - width), min(center_x + width, 320)
-                    min_y, max_y = max(0, center_y - height), min(
-                        center_y + height, 320
+        #rint(shape)
+        for annot in annotations:
+            if annot['x'].type() == torch.float:
+                for k, v in annot.items():
+                    annot[k] = [v]
+            for i in range(len(annot['x'])):
+                annotation = {k: v[i] for k, v in annot.items()}
+                if annotation["x"].item() == -1 and annotation["y"].item() == -1:
+                    pass
+                    # mask = torch.ones(shape, device=device)
+                else:
+                    # mask = torch.ones(shape, device=device)
+                    x, y, w, h = (
+                        annotation["x"],
+                        annotation["y"],
+                        annotation["width"],
+                        annotation["height"],
                     )
-                    mask[..., int(min_y) : int(max_y), int(min_x) : int(max_x)] = 1
+                    if x >= 0 and y >= 0 and w > 0 and h > 0:
+                        # mask[..., y : y + h, x : x + w] += self.roi_weight
+                        center_x, center_y = x + w / 2, y + h / 2
+                        # mask[..., y : y + h, x : x + w] = 1
+                        width = min(75, w * 2.5)
+                        height = min(75, h * 2.5)
+                        min_x, max_x = max(0, center_x - width), min(center_x + width, 320)
+                        min_y, max_y = max(0, center_y - height), min(
+                            center_y + height, 320
+                        )
+                        mask[i, int(min_y) : int(max_y), int(min_x) : int(max_x)] = 1
         if torch.all(mask == 0):
             annot_exists = False
         #     mask = torch.ones(shape, device=device)
