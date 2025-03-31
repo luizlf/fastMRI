@@ -102,6 +102,8 @@ class MriModule(pl.LightningModule):
 
         # pick a set of images to log if we don't have one already
         if self.val_log_indices is None:
+            np.random.seed(42)
+            
             self.val_log_indices = list(
                 np.random.permutation(len(self.trainer.val_dataloaders[0]))[
                     : self.num_log_images
@@ -115,7 +117,12 @@ class MriModule(pl.LightningModule):
             batch_indices = val_logs["batch_idx"]
         for i, batch_idx in enumerate(batch_indices):
             if batch_idx in self.val_log_indices:
-                key = f"val_images_idx_{batch_idx}"
+                ####
+                fname = val_logs["fname"][i]
+                slice_num = int(val_logs["slice_num"][i])
+                key = f"{fname}_slice_{slice_num}"
+                ####
+                #key = f"val_images_idx_{batch_idx}"
                 target = val_logs["target"][i].unsqueeze(0)
                 output = val_logs["output"][i].unsqueeze(0)
                 error = torch.abs(target - output)
