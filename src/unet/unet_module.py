@@ -95,6 +95,7 @@ class UnetModule(MriModule):
         roi_weight=0.5,
         attn_layer=False,
         use_roi=False,
+        use_attention_gates=False,
         **kwargs,
     ):
         """
@@ -133,6 +134,7 @@ class UnetModule(MriModule):
         self.roi_weight = roi_weight
         self.attn_layer = attn_layer
         self.use_roi = use_roi
+        self.use_attention_gates = use_attention_gates
 
         self.unet = Unet(
             in_chans=self.in_chans,
@@ -142,6 +144,7 @@ class UnetModule(MriModule):
             drop_prob=self.drop_prob,
             roi_weight=self.roi_weight,
             attn_layer=self.attn_layer,
+            use_attention_gates=self.use_attention_gates,
         )
 
         if self.metric == "ssim":
