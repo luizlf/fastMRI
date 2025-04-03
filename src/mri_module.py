@@ -180,6 +180,8 @@ class MriModule(pl.LightningModule):
     def on_validation_epoch_end(self):
         # aggregate losses
         losses = []
+        image_losses = []
+        roi_losses = []
         mse_vals = defaultdict(dict)
         target_norms = defaultdict(dict)
         ssim_vals = defaultdict(dict)
@@ -202,6 +204,12 @@ class MriModule(pl.LightningModule):
                 ssim_vals[k].update(val_log["ssim_vals"][k])
             for k in val_log["max_vals"]:
                 max_vals[k] = val_log["max_vals"][k]
+                
+            if "val_loss_image" in val_log:
+                image_losses.append(val_log["val_loss_image"].view(-1))  # type: ignore
+            if "val_loss_roi" in val_log:
+                roi_losses.append(val_log["val_loss_roi"].view(-1))  # type: ignore
+                
 
         # check to make sure we have all files in all metrics
         assert (
@@ -251,6 +259,12 @@ class MriModule(pl.LightningModule):
         )
 
         self.log("validation_loss", val_loss / tot_slice_examples, prog_bar=True)
+        if image_losses:
+            overall_loss = torch.sum(torch.cat(image_losses), dtype=torch.float32)
+            self.log('val_metrics/overall_l1', overall_loss / tot_slice_examples, prog_bar=True)
+        if roi_losses:
+            overall_loss = torch.sum(torch.cat(roi_losses), dtype=torch.float32)
+            self.log('val_metrics/overall_l1_roi', overall_loss / tot_slice_examples, prog_bar=True)
         for metric, value in metrics.items():
             self.log(f"val_metrics/{metric}", value / tot_examples)
 

@@ -230,15 +230,22 @@ class UnetModule(MriModule):
             batch.annotations, output.shape, output.device
         )
         
+        val_loss_image = F.l1_loss(output, batch.target)
+        
         if annot_exists:
             factor = mask.numel() / mask.sum()
-            val_loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
-            val_loss_image = F.l1_loss(output, batch.target)
-            val_loss = val_loss_image * 0.5 + val_loss_mask * 0.5
+            val_loss_roi = F.l1_loss(output * mask, batch.target * mask) * factor
         else:
-            val_loss = F.l1_loss(output, batch.target)
+            val_loss_roi = torch.tensor(0, device=output.device)
+                
+        # For training, use the appropriate loss based on configuration
+        if self.use_roi:
+            val_loss = val_loss_image * 0.5 + val_loss_roi * 0.5
+        else:
+            val_loss = val_loss_image
 
         self.log("val_loss", val_loss.detach())
+
         return {
             "batch_idx": batch_idx,
             "fname": batch.fname,
@@ -247,8 +254,9 @@ class UnetModule(MriModule):
             "output": output * std + mean,
             "target": batch.target * std + mean,
             "val_loss": val_loss,
+            "val_loss_image": val_loss_image,
+            "val_loss_roi": val_loss_roi,
         }
-
 
     def validation_step_comparison(self, batch, batch_idx):
         output = self(batch.image)
