@@ -29,6 +29,7 @@ dependencies = [
     "toml>=0.10.2",
     "torch>=1.8",
     "torch-tb-profiler>=0.4.3",
+    "torchinfo>=1.8.0",
     "torchmetrics>=0.5.1",
     "torchvision>=0.8.1",
     "tqdm>=4.67.1",

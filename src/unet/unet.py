@@ -59,19 +59,50 @@ class Unet(nn.Module):
             if self.attn_layer:
                 self.cbam_down.append(CBAM(ch * 2))
             ch *= 2
-
+        
+        # Bottleneck
         self.conv = ConvBlock(ch, ch * 2, drop_prob)
         if self.attn_layer:
             self.cbam_bottleneck = CBAM(ch * 2)
 
         self.up_conv = nn.ModuleList()
         self.up_transpose_conv = nn.ModuleList()
+        self.attention_gates = nn.ModuleList()
+        
         if self.attn_layer:
             self.cbam_up = nn.ModuleList()
 
-        for _ in range(num_pool_layers - 1):
+        for i in range(num_pool_layers):
+            
+            # Add attention gate for each level
+            # F_g is the number of channels in the gating signal (decoder)
+            # F_l is the number of channels in the skip connection (encoder)
+            # F_int is the intermediate channel dimension (reduced for efficiency)
+            if i == 0:
+                # First level upsampling from the bottleneck
+                self.attention_gates.append(
+                    AttentionGate(
+                        F_g=ch * 2,  # Bottleneck features
+                        F_l=ch,      # Last encoder level features
+                        F_int=ch // 2 # Reduced dimension
+                    )
+                )
+            else:
+                # Subsequent levels
+                self.attention_gates.append(
+                    AttentionGate(
+                        F_g=ch,        # Previous decoder level features
+                        F_l=ch // 2,   # Corresponding encoder level features
+                        F_int=ch // 4  # Reduced dimension
+                    )
+                )
+            
             self.up_transpose_conv.append(TransposeConvBlock(ch * 2, ch))
-            self.up_conv.append(ConvBlock(ch * 2, ch, drop_prob))
+            self.up_conv.append(ConvBlock(ch * 2, ch, drop_prob) if i < num_pool_layers - 1 
+                                else nn.Sequential(
+                                    ConvBlock(ch * 2, ch, drop_prob),
+                                    nn.Conv2d(ch, self.out_chans, kernel_size=1, stride=1),
+                                ))
             if self.attn_layer:
                 self.cbam_up.append(CBAM(ch * 2))
             ch //= 2
@@ -94,7 +125,7 @@ class Unet(nn.Module):
         Returns:
             Output tensor of shape `(N, out_chans, H, W)`.
         """
-        stack = []
+        encoder_outputs = []
         output = image
 
         # apply down-sampling layers
@@ -102,49 +133,49 @@ class Unet(nn.Module):
             for layer, cbam in zip(self.down_sample_layers, self.cbam_down):
                 output = layer(output)
                 output = cbam(output)
-                stack.append(output)
+                encoder_outputs.append(output)
                 output = F.avg_pool2d(output, kernel_size=2, stride=2, padding=0)
         else:
             for layer in self.down_sample_layers:
                 output = layer(output)
-                stack.append(output)
+                encoder_outputs.append(output)
                 output = F.avg_pool2d(output, kernel_size=2, stride=2, padding=0)
 
         output = self.conv(output)
-        # apply up-sampling layers
         if self.attn_layer:
-            for transpose_conv, conv, cbam in zip(self.up_transpose_conv, self.up_conv, self.cbam_up):
-                downsample_layer = stack.pop()
-                output = transpose_conv(output)
-
-                # reflect pad on the right/bottom if needed to handle odd input dimensions
-                padding = [0, 0, 0, 0]
-                if output.shape[-1] != downsample_layer.shape[-1]:
-                    padding[1] = 1
-                if output.shape[-2] != downsample_layer.shape[-2]:
-                    padding[3] = 1
-                if torch.sum(torch.tensor(padding)) != 0:
-                    output = F.pad(output, padding, "reflect")
-
-                output = torch.cat([output, downsample_layer], dim=1)
-                output = cbam(output)
-                output = conv(output)
-        else:
-            for transpose_conv, conv in zip(self.up_transpose_conv, self.up_conv):
-                downsample_layer = stack.pop()
-                output = transpose_conv(output)
-
-                # reflect pad on the right/bottom if needed to handle odd input dimensions
-                padding = [0, 0, 0, 0]
-                if output.shape[-1] != downsample_layer.shape[-1]:
-                    padding[1] = 1
-                if output.shape[-2] != downsample_layer.shape[-2]:
-                    padding[3] = 1
-                if torch.sum(torch.tensor(padding)) != 0:
-                    output = F.pad(output, padding, "reflect")
-
-                output = torch.cat([output, downsample_layer], dim=1)
-                output = conv(output)
+            output = self.cbam_bottleneck(output)
+            
+        # Decoder path with attention gates
+        for i, (transpose_conv, conv, attention_gate) in enumerate(
+            zip(self.up_transpose_conv, self.up_conv, self.attention_gates)
+        ):
+            # Get corresponding encoder output for skip connection
+            encoder_output = encoder_outputs[-(i + 1)]
+            
+            # Upsample decoder features
+            output = transpose_conv(output)
+            
+            # Handle odd dimensions with padding if needed
+            padding = [0, 0, 0, 0]
+            if output.shape[-1] != encoder_output.shape[-1]:
+                padding[1] = 1
+            if output.shape[-2] != encoder_output.shape[-2]:
+                padding[3] = 1
+            if torch.sum(torch.tensor(padding)) != 0:
+                output = F.pad(output, padding, "reflect")
+            
+            # Apply attention mechanism
+            gated_encoder_output = attention_gate(output, encoder_output)
+            
+            # Concatenate with attention-gated skip connection
+            output = torch.cat([output, gated_encoder_output], dim=1)
+            
+            # Apply CBAM if used
+            if self.attn_layer and i < len(self.cbam_up):
+                output = self.cbam_up[i](output)
+                
+            # Apply convolution
+            output = conv(output)
 
         return output
 
@@ -281,3 +312,75 @@ class CBAM(nn.Module):
         x = x * self.ca(x)
         x = x * self.sa(x)
         return x
+    
+"""
+Attention Gate Module for U-Net
+This module implements attention gates for skip connections in the U-Net architecture.
+"""
+
+class AttentionGate(nn.Module):
+    """
+    Attention Gate module for focusing on relevant features in skip connections.
+    
+    Implements the attention mechanism described in the Attention U-Net paper:
+    https://arxiv.org/abs/1804.03999
+    """
+    def __init__(self, F_g, F_l, F_int):
+        """
+        Initialize the attention gate module.
+        
+        Args:
+            F_g: Number of feature channels in the gating signal (from the decoder)
+            F_l: Number of feature channels in the input feature map (from the encoder)
+            F_int: Number of intermediate channels for dimension reduction
+        """
+        super(AttentionGate, self).__init__()
+        
+        # Gating path (decoder features)
+        self.W_g = nn.Sequential(
+            nn.Conv2d(F_g, F_int, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(F_int)
+        )
+        
+        # Skip connection path (encoder features)
+        self.W_x = nn.Sequential(
+            nn.Conv2d(F_l, F_int, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(F_int)
+        )
+        
+        # Attention coefficient computation
+        self.psi = nn.Sequential(
+            nn.Conv2d(F_int, 1, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(1),
+            nn.Sigmoid()
+        )
+        
+        self.relu = nn.ReLU(inplace=True)
+        
+    def forward(self, g, x):
+        """
+        Forward pass of the attention gate.
+        
+        Args:
+            g: Gating signal (decoder features)
+            x: Skip connection input (encoder features)
+            
+        Returns:
+            Attended feature map with same dimensions as x
+        """
+        # Apply 1x1 convolutions for dimension reduction
+        g1 = self.W_g(g)
+        x1 = self.W_x(x)
+        
+        # Element-wise sum followed by ReLU
+        if g1.shape[2:] != x1.shape[2:]:
+            # Upsample gating signal to match spatial dimensions of skip connection
+            g1 = F.interpolate(g1, size=x1.shape[2:], mode='bilinear', align_corners=False)
+        
+        psi = self.relu(g1 + x1)
+        
+        # Compute attention map
+        psi = self.psi(psi)
+        
+        # Element-wise multiplication of input feature map and attention map
+        return x * psi

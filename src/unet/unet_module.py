@@ -84,15 +84,15 @@ class UnetModule(MriModule):
         self,
         in_chans=1,
         out_chans=1,
-        chans=32,
-        num_pool_layers=4,
+        chans=64,
+        num_pool_layers=3,
         drop_prob=0.0,
         lr=0.001,
         lr_step_size=40,
         lr_gamma=0.1,
         weight_decay=0.0,
         metric="ssim",
-        roi_weight=0.1,
+        roi_weight=0.5,
         attn_layer=False,
         use_roi=False,
         **kwargs,
@@ -189,15 +189,15 @@ class UnetModule(MriModule):
 
     def training_step(self, batch, batch_idx):
         output = self(batch.image)
+        
+        # create ROI mask
+        if self.use_roi:
+            mask, annot_exists = self.create_mask(
+                batch.annotations, output.shape, output.device
+            )
         if self.metric == "l1":
-            if self.use_roi:
-                mask, annot_exists = self.create_mask(
-                    batch.annotations, output.shape, output.device
-                )
-                if annot_exists:
-                    factor = mask.numel() / mask.sum()
-                else:
-                    factor = 1
+            if self.use_roi and annot_exists:
+                factor = mask.numel() / mask.sum()
                 loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
                 loss_image = F.l1_loss(output, batch.target)
                 loss = (loss_image + loss_mask) / 2
@@ -206,10 +206,14 @@ class UnetModule(MriModule):
             else:
                 loss = F.l1_loss(output, batch.target)
         elif self.metric == "ssim":
-            mask, _ = self.create_mask(batch.annotations, output.shape, output.device)
-            loss = 1 - self.ssim(
-                output, batch.target, batch.max_value, mask=mask, use_roi=self.use_roi
-            )
+            if self.use_roi:
+                loss = 1 - self.ssim(
+                    output, batch.target, batch.max_value, mask=mask, use_roi=self.use_roi
+                )
+            else:
+                loss = 1 - self.ssim(
+                    output, batch.target, batch.max_value
+                )
 
         self.log("loss", loss.detach())
         return loss
@@ -222,35 +226,16 @@ class UnetModule(MriModule):
         mask, annot_exists = self.create_mask(
             batch.annotations, output.shape, output.device
         )
-        factor = mask.numel() / mask.sum()
-        if not annot_exists:
-            factor = 1
-        val_loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
-        # val_loss_image = F.l1_loss(output, batch.target)
-        val_loss = val_loss_mask  # val_loss_image + val_loss_mask
+        
+        if annot_exists:
+            factor = mask.numel() / mask.sum()
+            val_loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
+            val_loss_image = F.l1_loss(output, batch.target)
+            val_loss = val_loss_image * 0.5 + val_loss_mask * 0.5
+        else:
+            val_loss = F.l1_loss(output, batch.target)
 
-        """
-        if self.metric == "l1":
-            # val_loss = F.l1_loss(output, batch.target)
-            if self.use_roi:
-                mask, annot_exists = self.create_mask(
-                    batch.annotations, output.shape, output.device
-                )
-                if annot_exists:
-                    factor = mask.numel() / mask.sum()
-                else:
-                    factor = 1
-                val_loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
-                val_loss_image = F.l1_loss(output, batch.target)
-                val_loss = val_loss_image + val_loss_mask
-            else:
-                val_loss = F.l1_loss(output, batch.target)
-        elif self.metric == "ssim":
-            mask, _ = self.create_mask(batch.annotations, output.shape, output.device)
-            val_loss = 1 - self.ssim(
-                output, batch.target, batch.max_value, mask=mask, use_roi=self.use_roi
-            )"""
-
+        self.log("val_loss", val_loss.detach())
         return {
             "batch_idx": batch_idx,
             "fname": batch.fname,
@@ -258,9 +243,9 @@ class UnetModule(MriModule):
             "max_value": batch.max_value,
             "output": output * std + mean,
             "target": batch.target * std + mean,
-            # "val_loss": F.l1_loss(output, batch.target),
             "val_loss": val_loss,
         }
+
 
     def validation_step_comparison(self, batch, batch_idx):
         output = self(batch.image)
@@ -310,7 +295,7 @@ class UnetModule(MriModule):
             "val_loss": val_loss,
             "image_l1_loss": image_l1_loss,
             "image_ssim_loss": image_ssim_loss,
-            "roi_l1_loss": roi_l1_loss,
+            "roi_l1_loss": roi_l1_loss/factor,
             "roi_ssim_loss": roi_ssim_loss,
         }
 
