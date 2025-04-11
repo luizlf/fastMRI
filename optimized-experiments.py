@@ -24,110 +24,10 @@ from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.tuner.tuning import Tuner
 import multiprocessing as mp
 
-# Fix for multiprocessing on macOS
-mp.set_start_method('spawn', force=True)
-
-# Set process priority higher for better performance
-try:
-    os.nice(-10)  # Higher priority on Unix/Mac
-except:
-    pass  # Skip if not available
-
-# Common parameters for all experiments
-path_config = pathlib.Path("fastmri_dirs.yaml")
-max_epochs = 15  # Set this to your desired number of epochs
-baseline_batch_size = 16  # Start with a higher baseline for M4 Max
-num_workers = 0  # Set to 1 to minimize multiprocessing issues but still have some parallelism
-challenge = "singlecoil"
-num_gpus = 1
-backend = "mps"  # Metal Performance Shaders for Apple Silicon
-
-# Check if we need to disable automatic mixed precision on MPS backend
-# MPS does not fully support AMP the same way as CUDA
-use_amp = False  # By default, don't use AMP on MPS
-if backend == "mps":
-    precision = 32  # Use 32-bit precision on MPS
-else:
-    precision = 16  # Use 16-bit precision on other backends (CUDA)
-
-# Configure all the experiments to run
-experiments = [
-    {
-        "name": "baseline",
-        "description": "Baseline U-Net",
-        "params": {
-            "attn_layer": False,
-            "metric": "l1",
-            "use_roi": False,
-            "use_attention_gates": False
-        }
-    },
-    {
-        "name": "roi_focus",
-        "description": "U-Net with ROI focus",
-        "params": {
-            "attn_layer": False,
-            "metric": "l1",
-            "use_roi": True,
-            "use_attention_gates": False
-        }
-    },
-    {
-        "name": "cbam",
-        "description": "U-Net with CBAM",
-        "params": {
-            "attn_layer": True,
-            "metric": "l1",
-            "use_roi": False,
-            "use_attention_gates": False
-        }
-    },
-    {
-        "name": "attention_gates",
-        "description": "U-Net with Attention Gates",
-        "params": {
-            "attn_layer": False,
-            "metric": "l1",
-            "use_roi": True,
-            "use_attention_gates": True
-        }
-    },
-    {
-        "name": "full_attention",
-        "description": "U-Net with CBAM and Attention Gates",
-        "params": {
-            "attn_layer": True,
-            "metric": "l1",
-            "use_roi": True,
-            "use_attention_gates": True
-        }
-    }
-]
-
-# Create results directory
-results_dir = pathlib.Path("./experiment_results")
-results_dir.mkdir(exist_ok=True)
-
-# Create a hyperparameter search directory
-hyperparam_dir = results_dir / "hyperparameter_search"
-hyperparam_dir.mkdir(exist_ok=True)
-
-# Log file to track progress
-log_file = results_dir / "experiment_log.txt"
-with open(log_file, "a") as f:
-    f.write(f"\n\n==== STARTING NEW EXPERIMENT RUN {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ====\n")
-
-# Set global random seed for reproducibility
-pl.seed_everything(42)
-
-# Create transforms once (shared across experiments)
-mask = create_mask_for_mask_type("random", [0.08], [4])
-train_transform = T.UnetDataTransform(challenge, mask_func=mask, use_seed=False)
-val_transform = T.UnetDataTransform(challenge, mask_func=mask)
-test_transform = T.UnetDataTransform(challenge)
-
 # Function to find optimal batch size directly
-def find_optimal_batch_size(configs, experiment_name, max_batch_size=32):
+def find_optimal_batch_size(configs, experiment_name, max_batch_size, log_file, num_workers, 
+                            challenge, precision, train_transform, val_transform, test_transform,
+                            path_config, baseline_batch_size):
     """
     Find the optimal batch size without using separate processes
     """
@@ -187,11 +87,14 @@ def find_optimal_batch_size(configs, experiment_name, max_batch_size=32):
                 logger=False,
                 enable_checkpointing=False,
                 enable_model_summary=False,
-                enable_progress_bar=False,
+                enable_progress_bar=True,
                 precision=precision,     # Use precision based on backend
-                limit_train_batches=1,   # Only run 1 batch for testing
-                limit_val_batches=0,     # Skip validation
+                limit_train_batches=100,   # Only run 1 batch for testing
+                limit_val_batches=20,     # Skip validation
+                strategy="auto",
+                use_distributed_sampler=False
             )
+            
             
             # Prepare data to see if it fits in memory
             trainer.fit(test_model, datamodule=mini_data_module)
@@ -199,7 +102,9 @@ def find_optimal_batch_size(configs, experiment_name, max_batch_size=32):
             # If we get here, the batch size works
             memory_usage[batch_size] = batch_size  # Use batch size as proxy for memory usage
             
-            print(f"  Batch size {batch_size} completed successfully")
+            val_loss = trainer.callback_metrics.get("validation_loss", torch.tensor(float('inf'))).item()
+            
+            print(f"  Batch size {batch_size} completed successfully, validation loss = {val_loss:.20f}")
             
             # Clean up to free memory
             del trainer
@@ -208,8 +113,13 @@ def find_optimal_batch_size(configs, experiment_name, max_batch_size=32):
         except Exception as e:
             print(f"  Batch size {batch_size} failed with error: {type(e).__name__}")
             print(f"  Error details: {str(e)}")
-            # Stop here as we've hit our limit
+            # line where error occurred
+            print(f"  Error occurred at line {e.__traceback__.tb_lineno}")
+            # full traceback
+            print(f"  Full traceback: {str(e.__traceback__)}")
+            # break code execution
             raise e
+            break
     
     # Find the largest batch size that worked
     optimal_batch_size = max(memory_usage.keys()) if memory_usage else baseline_batch_size
@@ -221,7 +131,9 @@ def find_optimal_batch_size(configs, experiment_name, max_batch_size=32):
     return optimal_batch_size
 
 # Function to manually find a good learning rate
-def find_optimal_learning_rate(configs, experiment_name, data_module):
+def find_optimal_learning_rate(configs, experiment_name, log_file, hyperparam_dir,
+                               num_workers, challenge, precision, train_transform, val_transform, test_transform,
+                               path_config):
     """
     Manual approach to find a good learning rate without spawning multiple processes
     """
@@ -273,8 +185,8 @@ def find_optimal_learning_rate(configs, experiment_name, data_module):
             enable_checkpointing=False,
             enable_model_summary=False,
             max_epochs=1,
-            limit_train_batches=10,  # Run only 10 batches
-            limit_val_batches=5,     # Run only 5 val batches
+            limit_train_batches=100,  # Run only 10 batches
+            limit_val_batches=20,     # Run only 5 val batches
             precision=precision,     # Use precision based on backend
         )
         
@@ -286,11 +198,14 @@ def find_optimal_learning_rate(configs, experiment_name, data_module):
             val_loss = trainer.callback_metrics.get("validation_loss", torch.tensor(float('inf'))).item()
             losses.append((lr, val_loss))
             
-            print(f"  Learning rate {lr}: validation loss = {val_loss:.6f}")
+            print(f"  Learning rate {lr}: validation loss = {val_loss:.20f}")
             
         except Exception as e:
             print(f"  Learning rate {lr} failed with error: {type(e).__name__}")
             print(f"  Error details: {str(e)}")
+            print(f"  Error occurred at line {e.__traceback__.tb_lineno}")
+            print(f"  Full traceback: {str(e.__traceback__)}")
+            raise e
             # Continue to the next learning rate
         
         # Clean up
@@ -327,6 +242,109 @@ def find_optimal_learning_rate(configs, experiment_name, data_module):
 
 # Main execution function
 def run_experiments():
+    # Fix for multiprocessing on macOS
+    # mp.set_start_method('spawn', force=True)
+
+    # Set process priority higher for better performance
+    try:
+        os.nice(-10)  # Higher priority on Unix/Mac
+    except:
+        pass  # Skip if not available
+
+    # Common parameters for all experiments
+    path_config = pathlib.Path("fastmri_dirs.yaml")
+    max_epochs = 15  # Set this to your desired number of epochs
+    baseline_batch_size = 16  # Start with a higher baseline for M4 Max
+    num_workers = 2  # Set to 1 to minimize multiprocessing issues but still have some parallelism
+    challenge = "singlecoil"
+    num_gpus = 1
+    backend = "mps"  # Metal Performance Shaders for Apple Silicon
+
+    # Check if we need to disable automatic mixed precision on MPS backend
+    # MPS does not fully support AMP the same way as CUDA
+    use_amp = True  # By default, use AMP on MPS
+    if backend == "mps":
+        precision = 32  # Use 32-bit precision on MPS
+        #precision = "16-mixed"  # Use 16-bit precision on MPS
+    else:
+        precision = 16  # Use 16-bit precision on other backends (CUDA)
+
+    # Configure all the experiments to run
+    experiments = [
+        {
+            "name": "baseline",
+            "description": "Baseline U-Net",
+            "params": {
+                "attn_layer": False,
+                "metric": "l1",
+                "use_roi": False,
+                "use_attention_gates": False
+            }
+        },
+        {
+            "name": "roi_focus",
+            "description": "U-Net with ROI focus",
+            "params": {
+                "attn_layer": False,
+                "metric": "l1",
+                "use_roi": True,
+                "use_attention_gates": False
+            }
+        },
+        {
+            "name": "cbam",
+            "description": "U-Net with CBAM",
+            "params": {
+                "attn_layer": True,
+                "metric": "l1",
+                "use_roi": False,
+                "use_attention_gates": False
+            }
+        },
+        {
+            "name": "attention_gates",
+            "description": "U-Net with Attention Gates",
+            "params": {
+                "attn_layer": False,
+                "metric": "l1",
+                "use_roi": True,
+                "use_attention_gates": True
+            }
+        },
+        {
+            "name": "full_attention",
+            "description": "U-Net with CBAM and Attention Gates",
+            "params": {
+                "attn_layer": True,
+                "metric": "l1",
+                "use_roi": True,
+                "use_attention_gates": True
+            }
+        }
+    ]
+
+    # Create results directory
+    results_dir = pathlib.Path("./experiment_results")
+    results_dir.mkdir(exist_ok=True)
+
+    # Create a hyperparameter search directory
+    hyperparam_dir = results_dir / "hyperparameter_search"
+    hyperparam_dir.mkdir(exist_ok=True)
+
+    # Log file to track progress
+    log_file = results_dir / "experiment_log.txt"
+    with open(log_file, "a") as f:
+        f.write(f"\n\n==== STARTING NEW EXPERIMENT RUN {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ====\n")
+
+    # Set global random seed for reproducibility
+    pl.seed_everything(42)
+
+    # Create transforms once (shared across experiments)
+    mask = create_mask_for_mask_type("random", [0.08], [4])
+    train_transform = T.UnetDataTransform(challenge, mask_func=mask, use_seed=False)
+    val_transform = T.UnetDataTransform(challenge, mask_func=mask)
+    test_transform = T.UnetDataTransform(challenge)
+
     # Run each experiment in sequence
     for exp_idx, experiment in enumerate(experiments):
         # Log experiment start
@@ -393,7 +411,10 @@ def run_experiments():
         )
         
         # Find optimal batch size for this configuration
-        optimal_batch_size = find_optimal_batch_size(configs, version_name)
+        max_batch_size = 32  # Set a maximum batch size for testing
+        optimal_batch_size = find_optimal_batch_size(configs, version_name, max_batch_size, log_file, 
+                                                     num_workers, challenge, precision, train_transform,
+                                                     val_transform, test_transform, path_config, baseline_batch_size)
         configs['batch_size'] = optimal_batch_size
         
         # Create a data module with the optimal batch size
@@ -410,7 +431,9 @@ def run_experiments():
         )
         
         # Find optimal learning rate for this configuration
-        optimal_lr = find_optimal_learning_rate(configs, version_name, data_module)
+        optimal_lr = find_optimal_learning_rate(configs, version_name, log_file, hyperparam_dir, num_workers, 
+                                                challenge, precision, train_transform, val_transform,
+                                                test_transform, path_config)
         configs['lr'] = optimal_lr
         
         # Log the optimized hyperparameters

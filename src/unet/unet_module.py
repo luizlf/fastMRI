@@ -135,6 +135,7 @@ class UnetModule(MriModule):
         self.attn_layer = attn_layer
         self.use_roi = use_roi
         self.use_attention_gates = use_attention_gates
+        # Use parent class's device handling
 
         self.unet = Unet(
             in_chans=self.in_chans,
@@ -153,9 +154,11 @@ class UnetModule(MriModule):
     def forward(self, image):
         return self.unet(image.unsqueeze(1)).squeeze(1)
 
-    def create_mask(self, annotations, shape, device):
+    def create_mask(self, annotations, shape):
         annot_exists = True
-        mask = torch.zeros(shape, device=device)
+        # Get the current device from the model
+        current_device = next(self.parameters()).device
+        mask = torch.zeros(shape, device=current_device)
         #rint(shape)
         for annot in annotations:
             if annot['x'].type() == torch.float:
@@ -196,7 +199,7 @@ class UnetModule(MriModule):
         # create ROI mask
         if self.use_roi:
             mask, annot_exists = self.create_mask(
-                batch.annotations, output.shape, output.device
+                batch.annotations, output.shape
             )
         if self.metric == "l1":
             if self.use_roi and annot_exists:
@@ -227,7 +230,7 @@ class UnetModule(MriModule):
         std = batch.std.unsqueeze(1).unsqueeze(2)
 
         mask, annot_exists = self.create_mask(
-            batch.annotations, output.shape, output.device
+            batch.annotations, output.shape
         )
         
         val_loss_image = F.l1_loss(output, batch.target)
@@ -277,7 +280,7 @@ class UnetModule(MriModule):
         #     val_loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask, use_roi=True)
 
         mask, annot_exist = self.create_mask(
-            batch.annotations, output.shape, output.device
+            batch.annotations, output.shape
         )
         factor = mask.numel() / mask.sum()
         if not annot_exist:

@@ -12,6 +12,7 @@ from collections import defaultdict
 import numpy as np
 import pytorch_lightning as pl
 import torch
+from torch._C import device
 from torchmetrics.metric import Metric
 
 import fastmri
@@ -33,7 +34,6 @@ class DistributedMetricSum(Metric):
 
     def compute(self):
         return self.quantity
-
 
 class MriModule(pl.LightningModule):
     """
@@ -72,6 +72,7 @@ class MriModule(pl.LightningModule):
         self.ValLoss = DistributedMetricSum()
         self.TotExamples = DistributedMetricSum()
         self.TotSliceExamples = DistributedMetricSum()
+        self._device_type = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
 
     def validation_step_end(self, val_logs):
         # check inputs
@@ -145,14 +146,14 @@ class MriModule(pl.LightningModule):
             target = val_logs["target"][i].cpu().numpy()
 
             mse_vals[fname][slice_num] = torch.tensor(
-                evaluate.mse(target, output), dtype=torch.float32
+                evaluate.mse(target, output), dtype=torch.float32, device=self._device_type
             ).view(1)
             target_norms[fname][slice_num] = torch.tensor(
-                evaluate.mse(target, np.zeros_like(target)), dtype=torch.float32
+                evaluate.mse(target, np.zeros_like(target)), dtype=torch.float32, device=self._device_type
             ).view(1)
             ssim_vals[fname][slice_num] = torch.tensor(
                 evaluate.ssim(target[None, ...], output[None, ...], maxval=maxval),
-                dtype=torch.float32,
+                dtype=torch.float32, device=self._device_type,
             ).view(1)
             max_vals[fname] = maxval
 
@@ -227,10 +228,12 @@ class MriModule(pl.LightningModule):
             mse_val = torch.mean(
                 torch.cat([v.view(-1) for _, v in mse_vals[fname].items()]),
                 dtype=torch.float32,
+                device=self._device_type,
             )
             target_norm = torch.mean(
                 torch.cat([v.view(-1) for _, v in target_norms[fname].items()]),
                 dtype=torch.float32,
+                device=self._device_type,
             )
             metrics["nmse"] = metrics["nmse"] + mse_val / target_norm
             metrics["psnr"] = (
@@ -238,7 +241,7 @@ class MriModule(pl.LightningModule):
                 + 20
                 * torch.log10(
                     torch.tensor(
-                        max_vals[fname], dtype=mse_val.dtype, device=mse_val.device
+                        max_vals[fname], dtype=mse_val.dtype, device=self._device_type
                     )
                 )
                 - 10 * torch.log10(mse_val)
@@ -253,17 +256,25 @@ class MriModule(pl.LightningModule):
         metrics["ssim"] = self.SSIM(metrics["ssim"])
         metrics["psnr"] = self.PSNR(metrics["psnr"])
         tot_examples = self.TotExamples(torch.tensor(local_examples))
-        val_loss = self.ValLoss(torch.sum(torch.cat(losses), dtype=torch.float32))
-        tot_slice_examples = self.TotSliceExamples(
-            torch.tensor(len(losses), dtype=torch.float32)
-        )
+        
 
+        val_loss = self.ValLoss(torch.sum(torch.cat(losses), dtype=torch.float32, device=self._device_type))
+        tot_slice_examples = self.TotSliceExamples(
+            torch.tensor(len(losses), dtype=torch.float32, device=self._device_type)
+        )
         self.log("validation_loss", val_loss / tot_slice_examples, prog_bar=True)
+    #raise ValueError(f"{losses} {metrics} {val_logs}")
+        #else:
+            # Set defaults when no validation loss is available
+        #    val_loss = self.ValLoss(torch.tensor(0.0, dtype=torch.float32, device=self._device_type))
+        #    tot_slice_examples = self.TotSliceExamples(torch.tensor(0.0, dtype=torch.float32, device=self._device_type))
+         #   self.log("validation_loss", torch.tensor(0.0, dtype=torch.float32, device=self._device_type), prog_bar=True)
+        
         if image_losses:
-            overall_loss = torch.sum(torch.cat(image_losses), dtype=torch.float32)
+            overall_loss = torch.sum(torch.cat(image_losses), dtype=torch.float32, device=self._device_type)
             self.log('val_metrics/overall_l1', overall_loss / tot_slice_examples, prog_bar=True)
         if roi_losses:
-            overall_loss = torch.sum(torch.cat(roi_losses), dtype=torch.float32)
+            overall_loss = torch.sum(torch.cat(roi_losses), dtype=torch.float32, device=self._device_type)
             self.log('val_metrics/overall_l1_roi', overall_loss / tot_slice_examples, prog_bar=True)
         for metric, value in metrics.items():
             self.log(f"val_metrics/{metric}", value / tot_examples)
