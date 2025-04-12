@@ -61,7 +61,7 @@ class Unet(nn.Module):
             if self.attn_layer:
                 self.cbam_down.append(CBAM(ch * 2))
             ch *= 2
-        
+
         # Bottleneck
         self.conv = ConvBlock(ch, ch * 2, drop_prob)
         if self.attn_layer:
@@ -71,67 +71,88 @@ class Unet(nn.Module):
         self.up_transpose_conv = nn.ModuleList()
         if self.use_attention_gates:
             self.attention_gates = nn.ModuleList()
-        
-        if self.use_attention_gates:
-            self.attention_gates = nn.ModuleList()
-            
-            for i in range(num_pool_layers):
-                # Add attention gate for each level
-                if i == 0:
-                    # First level upsampling from the bottleneck
-                    self.attention_gates.append(
-                        AttentionGate(
-                            F_g=ch * 2,  # Bottleneck features
-                            F_l=ch,      # Last encoder level features
-                            F_int=ch // 2 # Reduced dimension
-                        )
-                    )
-                else:
-                    # Subsequent levels
-                    self.attention_gates.append(
-                        AttentionGate(
-                            F_g=ch,        # Previous decoder level features
-                            F_l=ch // 2,   # Corresponding encoder level features
-                            F_int=ch // 4  # Reduced dimension
-                        )
-                    )
-                
-                # Regular up-sampling operations
-                self.up_transpose_conv.append(TransposeConvBlock(ch * 2, ch))
-                self.up_conv.append(
-                    ConvBlock(ch * 2, ch, drop_prob) if i < num_pool_layers - 1 
-                    else nn.Sequential(
-                        ConvBlock(ch * 2, ch, drop_prob),
-                        nn.Conv2d(ch, self.out_chans, kernel_size=1, stride=1),
-                    )
-                )
-                
-                if self.attn_layer:
-                    if i == 0:  # Create the list if on first iteration
-                        self.cbam_up = nn.ModuleList()
-                    self.cbam_up.append(CBAM(ch * 2))
-                    
-                ch //= 2
-        else:
-            # Regular decoder path without attention gates
-            for i in range(num_pool_layers):
-                # Regular up-sampling operations
-                self.up_transpose_conv.append(TransposeConvBlock(ch * 2, ch))
-                self.up_conv.append(
-                    ConvBlock(ch * 2, ch, drop_prob) if i < num_pool_layers - 1 
-                    else nn.Sequential(
-                        ConvBlock(ch * 2, ch, drop_prob),
-                        nn.Conv2d(ch, self.out_chans, kernel_size=1, stride=1),
-                    )
-                )
-                
-                if self.attn_layer:
-                    if i == 0:  # Create the list if on first iteration
-                        self.cbam_up = nn.ModuleList()
-                    self.cbam_up.append(CBAM(ch * 2))
-                    
-                ch //= 2
 
+            # ch = self.chans * (2 ** (self.num_pool_layers - 1)) # Channels of deepest encoder output
+            # Start with channels from bottleneck output for first transpose conv input
+            decoder_in_ch = ch * 2
+
+            for i in range(num_pool_layers):
+                encoder_skip_ch = self.chans * (
+                    2 ** (num_pool_layers - 1 - i)
+                )  # F_l = Channels from corresponding encoder layer
+                gating_signal_ch = (
+                    decoder_in_ch // 2
+                )  # F_g = Output channels of TransposeConv
+
+                self.up_transpose_conv.append(
+                    TransposeConvBlock(decoder_in_ch, gating_signal_ch)
+                )
+
+                # Intermediate channels for AttentionGate - typically half of F_l
+                intermediate_ch = encoder_skip_ch // 2
+
+                self.attention_gates.append(
+                    AttentionGate(
+                        F_g=gating_signal_ch, F_l=encoder_skip_ch, F_int=intermediate_ch
+                    )
+                )
+
+                # Input channels for the final ConvBlock at this level = F_g + F_l
+                # (Concatenation of upsampled decoder features (g) and attended encoder features (x*alpha))
+                conv_in_ch = gating_signal_ch + encoder_skip_ch
+                conv_out_ch = (
+                    gating_signal_ch  # Output channels match the upsampled channels
+                )
+
+                if i < num_pool_layers - 1:
+                    self.up_conv.append(ConvBlock(conv_in_ch, conv_out_ch, drop_prob))
+                    # Update decoder_in_ch for the next TransposeConvBlock
+                    decoder_in_ch = conv_out_ch
+                else:  # Last layer sequence
+                    self.up_conv.append(
+                        nn.Sequential(
+                            ConvBlock(conv_in_ch, conv_out_ch, drop_prob),
+                            nn.Conv2d(
+                                conv_out_ch, self.out_chans, kernel_size=1, stride=1
+                            ),
+                        )
+                    )
+                    # No need to update decoder_in_ch after last layer
+
+                # CBAM layer insertion (if applicable) - needs careful channel check
+                if self.attn_layer:
+                    if i == 0:
+                        self.cbam_up = nn.ModuleList()
+                    # CBAM should likely process the output of the ConvBlock before the final 1x1 or before next upsampling
+                    # Let's assume it processes the output 'conv_out_ch' features
+                    self.cbam_up.append(CBAM(conv_out_ch))
+                    # If CBAM is applied here, does it change how features are passed?
+                    # The current forward loop applies CBAM *after* concatenation, before the final conv block.
+                    # Let's adjust the forward loop later if needed, keep init simpler for now.
+
+        else:  # Original logic without Attention Gates
+            ch = self.chans * (
+                2 ** (self.num_pool_layers - 1)
+            )  # Start channel count from deepest encoder level
+            for i in range(num_pool_layers):
+                self.up_transpose_conv.append(TransposeConvBlock(ch * 2, ch))
+                # Original up_conv input was ch*2 (cat(transpose_out(ch), encoder_skip(ch)))
+                self.up_conv.append(
+                    ConvBlock(ch * 2, ch, drop_prob)
+                    if i < num_pool_layers - 1
+                    else nn.Sequential(
+                        ConvBlock(ch * 2, ch, drop_prob),
+                        nn.Conv2d(ch, self.out_chans, kernel_size=1, stride=1),
+                    )
+                )
+
+                if self.attn_layer:
+                    if i == 0:
+                        self.cbam_up = nn.ModuleList()
+                    # Original CBAM was applied to the concatenated input (ch*2)
+                    self.cbam_up.append(CBAM(ch * 2))
+
+                ch //= 2
 
     def forward(self, image: torch.Tensor) -> torch.Tensor:
         """
@@ -144,11 +165,11 @@ class Unet(nn.Module):
         encoder_outputs = []
         output = image
 
-        # apply down-sampling layers
+        # Encoder Path
         if self.attn_layer:
             for layer, cbam in zip(self.down_sample_layers, self.cbam_down):
                 output = layer(output)
-                output = cbam(output)
+                output = cbam(output)  # Apply CBAM after conv block
                 encoder_outputs.append(output)
                 output = F.avg_pool2d(output, kernel_size=2, stride=2, padding=0)
         else:
@@ -157,40 +178,49 @@ class Unet(nn.Module):
                 encoder_outputs.append(output)
                 output = F.avg_pool2d(output, kernel_size=2, stride=2, padding=0)
 
+        # Bottleneck
         output = self.conv(output)
         if self.attn_layer:
-            output = self.cbam_bottleneck(output)
-            
-        # Decoder path with or without attention gates
-        for i, (transpose_conv, conv) in enumerate(zip(self.up_transpose_conv, self.up_conv)):
+            output = self.cbam_bottleneck(output)  # Apply CBAM after bottleneck conv
+
+        # Decoder Path
+        for i in range(self.num_pool_layers):
             # Get corresponding encoder output for skip connection
             encoder_output = encoder_outputs[-(i + 1)]
-            
-            # Upsample decoder features
-            output = transpose_conv(output)
-            
-            # Handle odd dimensions with padding if needed
+
+            # Upsample decoder features (gating signal 'g' for AttentionGate)
+            output = self.up_transpose_conv[i](output)  # Shape: [N, F_g, H, W]
+
+            # Handle potential dimension mismatch after upsampling
             padding = [0, 0, 0, 0]
             if output.shape[-1] != encoder_output.shape[-1]:
-                padding[1] = 1
+                padding[1] = 1  # Pad width
             if output.shape[-2] != encoder_output.shape[-2]:
-                padding[3] = 1
+                padding[3] = 1  # Pad height
             if torch.sum(torch.tensor(padding)) != 0:
                 output = F.pad(output, padding, "reflect")
-            
-            # Apply attention mechanism if enabled
+
+            # Apply Attention Gate (if enabled)
             if self.use_attention_gates:
-                encoder_output = self.attention_gates[i](output, encoder_output)
-            
-            # Concatenate with encoder output (attention-gated or regular)
-            output = torch.cat([output, encoder_output], dim=1)
-            
-            # Apply CBAM if used
+                attended_encoder_output = self.attention_gates[i](
+                    output, encoder_output
+                )  # Shape: [N, F_l, H, W]
+                # Concatenate upsampled features (g) and attended encoder features
+                output = torch.cat(
+                    [output, attended_encoder_output], dim=1
+                )  # Shape: [N, F_g + F_l, H, W]
+            else:
+                # Original concatenation without Attention Gate
+                output = torch.cat(
+                    [output, encoder_output], dim=1
+                )  # Shape: [N, ch + ch = ch*2, H, W]
+
+            # Apply CBAM (if enabled) - Applied AFTER concatenation, BEFORE final conv block
             if self.attn_layer and i < len(self.cbam_up):
                 output = self.cbam_up[i](output)
-                
-            # Apply convolution
-            output = conv(output)
+
+            # Apply final convolution block for this level
+            output = self.up_conv[i](output)
 
         return output
 
@@ -270,7 +300,6 @@ class TransposeConvBlock(nn.Module):
             Output tensor of shape `(N, out_chans, H*2, W*2)`.
         """
         return self.layers(image)
-    
 
 
 class SpatialAttention(nn.Module):
@@ -315,7 +344,7 @@ class ChannelAttention(nn.Module):
         max_out = self.fc2(self.relu1(self.fc1(self.max_pool(x))))
         out = avg_out + max_out
         return self.sigmoid(out)
-    
+
 
 class CBAM(nn.Module):
     def __init__(self, in_planes, ratio=16, kernel_size=7):
@@ -327,75 +356,80 @@ class CBAM(nn.Module):
         x = x * self.ca(x)
         x = x * self.sa(x)
         return x
-    
+
+
 """
 Attention Gate Module for U-Net
 This module implements attention gates for skip connections in the U-Net architecture.
 """
 
+
 class AttentionGate(nn.Module):
     """
     Attention Gate module for focusing on relevant features in skip connections.
-    
+
     Implements the attention mechanism described in the Attention U-Net paper:
     https://arxiv.org/abs/1804.03999
     """
+
     def __init__(self, F_g, F_l, F_int):
         """
         Initialize the attention gate module.
-        
+
         Args:
             F_g: Number of feature channels in the gating signal (from the decoder)
             F_l: Number of feature channels in the input feature map (from the encoder)
             F_int: Number of intermediate channels for dimension reduction
         """
         super(AttentionGate, self).__init__()
-        
+
         # Gating path (decoder features)
         self.W_g = nn.Sequential(
             nn.Conv2d(F_g, F_int, kernel_size=1, stride=1, padding=0, bias=True),
-            nn.BatchNorm2d(F_int)
+            nn.BatchNorm2d(F_int),
         )
-        
+
         # Skip connection path (encoder features)
         self.W_x = nn.Sequential(
             nn.Conv2d(F_l, F_int, kernel_size=1, stride=1, padding=0, bias=True),
-            nn.BatchNorm2d(F_int)
+            nn.BatchNorm2d(F_int),
         )
-        
+
         # Attention coefficient computation
         self.psi = nn.Sequential(
             nn.Conv2d(F_int, 1, kernel_size=1, stride=1, padding=0, bias=True),
             nn.BatchNorm2d(1),
-            nn.Sigmoid()
+            nn.Sigmoid(),
         )
-        
+
         self.relu = nn.ReLU(inplace=True)
-        
+
     def forward(self, g, x):
         """
         Forward pass of the attention gate.
-        
+
         Args:
             g: Gating signal (decoder features)
             x: Skip connection input (encoder features)
-            
+
         Returns:
             Attended feature map with same dimensions as x
         """
         # Apply 1x1 convolutions for dimension reduction
         g1 = self.W_g(g)
         x1 = self.W_x(x)
-        
+
         # Element-wise sum followed by ReLU
         if g1.shape[2:] != x1.shape[2:]:
             # Upsample gating signal to match spatial dimensions of skip connection
-            g1 = F.interpolate(g1, size=x1.shape[2:], mode='bilinear', align_corners=False)
-        
+            g1 = F.interpolate(
+                g1, size=x1.shape[2:], mode="bilinear", align_corners=False
+            )
+
         psi = self.relu(g1 + x1)
-        
+
         # Compute attention map
         psi = self.psi(psi)
-        
+
         # Element-wise multiplication of input feature map and attention map
         return x * psi

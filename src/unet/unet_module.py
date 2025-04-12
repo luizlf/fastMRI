@@ -6,6 +6,7 @@ LICENSE file in the root directory of this source tree.
 """
 
 from argparse import ArgumentParser
+import numpy as np
 
 import torch
 from torch.nn import functional as F
@@ -15,6 +16,8 @@ from torch import nn
 from src.unet.unet import Unet
 
 from src.mri_module import MriModule
+
+from fastmri import evaluate  # Import evaluate functions
 
 
 class SSIM(nn.Module):
@@ -88,8 +91,8 @@ class UnetModule(MriModule):
         num_pool_layers=3,
         drop_prob=0.0,
         lr=0.001,
-        lr_step_size=40,
-        lr_gamma=0.1,
+        lr_factor=0.1,
+        lr_patience=3,
         weight_decay=0.0,
         metric="ssim",
         roi_weight=0.5,
@@ -110,10 +113,11 @@ class UnetModule(MriModule):
                 up-sampling layers. Defaults to 4.
             drop_prob (float, optional): Dropout probability. Defaults to 0.0.
             lr (float, optional): Learning rate. Defaults to 0.001.
-            lr_step_size (int, optional): Learning rate step size. Defaults to
-                40.
-            lr_gamma (float, optional): Learning rate gamma decay. Defaults to
-                0.1.
+            lr_factor (float, optional): Factor by which the learning rate will
+                be reduced by ReduceLROnPlateau. Defaults to 0.1.
+            lr_patience (int, optional): Number of epochs with no improvement
+                after which learning rate will be reduced by ReduceLROnPlateau.
+                Defaults to 3.
             weight_decay (float, optional): Parameter for penalizing weights
                 norm. Defaults to 0.0.
             roi_weight (float, optional): Weight for the region of interest (0.1 means 10% higher weight to the annotated ROI).
@@ -127,8 +131,8 @@ class UnetModule(MriModule):
         self.num_pool_layers = num_pool_layers
         self.drop_prob = drop_prob
         self.lr = lr
-        self.lr_step_size = lr_step_size
-        self.lr_gamma = lr_gamma
+        self.lr_factor = lr_factor
+        self.lr_patience = lr_patience
         self.weight_decay = weight_decay
         self.metric = metric
         self.roi_weight = roi_weight
@@ -159,12 +163,12 @@ class UnetModule(MriModule):
         # Get the current device from the model
         current_device = next(self.parameters()).device
         mask = torch.zeros(shape, device=current_device)
-        #rint(shape)
+        # rint(shape)
         for annot in annotations:
-            if annot['x'].type() == torch.float:
+            if annot["x"].type() == torch.float:
                 for k, v in annot.items():
                     annot[k] = [v]
-            for i in range(len(annot['x'])):
+            for i in range(len(annot["x"])):
                 annotation = {k: v[i] for k, v in annot.items()}
                 if annotation["x"].item() == -1 and annotation["y"].item() == -1:
                     pass
@@ -183,7 +187,9 @@ class UnetModule(MriModule):
                         # mask[..., y : y + h, x : x + w] = 1
                         width = min(75, w * 2.5)
                         height = min(75, h * 2.5)
-                        min_x, max_x = max(0, center_x - width), min(center_x + width, 320)
+                        min_x, max_x = max(0, center_x - width), min(
+                            center_x + width, 320
+                        )
                         min_y, max_y = max(0, center_y - height), min(
                             center_y + height, 320
                         )
@@ -195,33 +201,32 @@ class UnetModule(MriModule):
 
     def training_step(self, batch, batch_idx):
         output = self(batch.image)
-        
+
         # create ROI mask
         if self.use_roi:
-            mask, annot_exists = self.create_mask(
-                batch.annotations, output.shape
-            )
+            mask, annot_exists = self.create_mask(batch.annotations, output.shape)
         if self.metric == "l1":
-            if self.use_roi and annot_exists:
+            loss_image = F.l1_loss(output, batch.target)
+            if self.use_roi and annot_exists and mask.sum() > 0:
                 factor = mask.numel() / mask.sum()
                 loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
-                loss_image = F.l1_loss(output, batch.target)
                 loss = (loss_image + loss_mask) / 2
-                # print('batch.target * mask max: ', (batch.target * mask).max())
-                # print('batch.target * mask min: ', (batch.target * mask).min())
             else:
-                loss = F.l1_loss(output, batch.target)
+                loss = loss_image
         elif self.metric == "ssim":
-            if self.use_roi:
+            if self.use_roi and annot_exists:
                 loss = 1 - self.ssim(
-                    output, batch.target, batch.max_value, mask=mask, use_roi=self.use_roi
+                    output,
+                    batch.target,
+                    batch.max_value,
+                    mask=mask,
+                    use_roi=self.use_roi,
                 )
             else:
-                loss = 1 - self.ssim(
-                    output, batch.target, batch.max_value
-                )
-
-        self.log("loss", loss.detach())
+                loss = 1 - self.ssim(output, batch.target, batch.max_value)
+        # print(f"Training Loss: {loss}")
+        # raise ValueError(f"Training Loss: {loss}")
+        self.log("loss", loss.detach(), batch_size=batch.image.size(0))
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -229,26 +234,91 @@ class UnetModule(MriModule):
         mean = batch.mean.unsqueeze(1).unsqueeze(2)
         std = batch.std.unsqueeze(1).unsqueeze(2)
 
-        mask, annot_exists = self.create_mask(
-            batch.annotations, output.shape
-        )
-        
-        val_loss_image = F.l1_loss(output, batch.target)
-        
-        if annot_exists:
+        mask, annot_exists = self.create_mask(batch.annotations, output.shape)
+
+        # Calculate factor safely
+        if annot_exists and mask.sum() > 0:
             factor = mask.numel() / mask.sum()
+        else:
+            factor = 1.0  # Set factor to 1 if mask sum is 0 or no annotation
+
+        val_loss_image = F.l1_loss(output, batch.target)
+
+        if (
+            annot_exists and mask.sum() > 0
+        ):  # Check mask sum again before calculating ROI loss
             val_loss_roi = F.l1_loss(output * mask, batch.target * mask) * factor
         else:
-            val_loss_roi = torch.tensor(0, device=output.device)
-                
+            val_loss_roi = torch.tensor(
+                0.0, device=output.device, dtype=output.dtype
+            )  # Set ROI loss to 0
+
         # For training, use the appropriate loss based on configuration
         if self.use_roi:
             val_loss = val_loss_image * 0.5 + val_loss_roi * 0.5
         else:
             val_loss = val_loss_image
 
-        self.log("val_loss", val_loss.detach())
+        self.log(
+            "val_loss",
+            val_loss.detach(),
+            on_epoch=True,
+            prog_bar=True,
+            sync_dist=True,
+            batch_size=batch.image.size(0),
+        )
+        # Log individual components for epoch-level averaging
+        self.log(
+            "val_loss_image",
+            val_loss_image.detach(),
+            on_epoch=True,
+            prog_bar=False,
+            sync_dist=True,
+            batch_size=batch.image.size(0),
+        )
+        self.log(
+            "val_loss_roi",
+            val_loss_roi.detach(),
+            on_epoch=True,
+            prog_bar=False,
+            sync_dist=True,
+            batch_size=batch.image.size(0),
+        )
 
+        # Calculate metrics for on_validation_epoch_end aggregation
+        output_np = (output * std + mean).cpu().numpy()
+        target_np = (batch.target * std + mean).cpu().numpy()
+        max_value_np = batch.max_value.cpu().numpy()
+
+        mse_vals = {}
+        target_norms = {}
+        ssim_vals = {}
+
+        for i in range(output_np.shape[0]):  # Iterate through batch
+            fname = batch.fname[i]
+            slice_num = int(batch.slice_num[i].item())
+            max_val = max_value_np[i]
+            target_slice = target_np[i]
+            output_slice = output_np[i]
+
+            mse_val = evaluate.mse(target_slice, output_slice)
+            target_norm = evaluate.mse(target_slice, np.zeros_like(target_slice))
+            ssim_val = evaluate.ssim(
+                target_slice[None, ...], output_slice[None, ...], maxval=max_val
+            )
+
+            # Initialize nested dict if fname not seen before
+            if fname not in mse_vals:
+                mse_vals[fname] = {}
+                target_norms[fname] = {}
+                ssim_vals[fname] = {}
+
+            # Store metrics as tensors (can keep on CPU for aggregation)
+            mse_vals[fname][slice_num] = torch.tensor(mse_val)
+            target_norms[fname][slice_num] = torch.tensor(target_norm)
+            ssim_vals[fname][slice_num] = torch.tensor(ssim_val)
+
+        # Return values needed for metric calculation in on_validation_epoch_end
         return {
             "batch_idx": batch_idx,
             "fname": batch.fname,
@@ -259,6 +329,10 @@ class UnetModule(MriModule):
             "val_loss": val_loss,
             "val_loss_image": val_loss_image,
             "val_loss_roi": val_loss_roi,
+            # Return computed metrics for aggregation
+            "mse_vals": mse_vals,
+            "target_norms": target_norms,
+            "ssim_vals": ssim_vals,
         }
 
     def validation_step_comparison(self, batch, batch_idx):
@@ -279,9 +353,7 @@ class UnetModule(MriModule):
         #     mask, _ = self.create_mask(batch.annotations, output.shape, output.device)
         #     val_loss = 1 - self.ssim(output, batch.target, batch.max_value, mask=mask, use_roi=True)
 
-        mask, annot_exist = self.create_mask(
-            batch.annotations, output.shape
-        )
+        mask, annot_exist = self.create_mask(batch.annotations, output.shape)
         factor = mask.numel() / mask.sum()
         if not annot_exist:
             factor = 1
@@ -299,6 +371,7 @@ class UnetModule(MriModule):
             roi_l1_loss = torch.tensor(0)
             roi_ssim_loss = torch.tensor(0)
 
+        # print(f"val_step_comp Validation Loss: {val_loss}, image loss: {image_l1_loss}, roi loss: {roi_l1_loss}")
         return {
             "batch_idx": batch_idx,
             "fname": batch.fname,
@@ -309,7 +382,7 @@ class UnetModule(MriModule):
             "val_loss": val_loss,
             "image_l1_loss": image_l1_loss,
             "image_ssim_loss": image_ssim_loss,
-            "roi_l1_loss": roi_l1_loss/factor,
+            "roi_l1_loss": roi_l1_loss / factor,
             "roi_ssim_loss": roi_ssim_loss,
         }
 
@@ -318,11 +391,21 @@ class UnetModule(MriModule):
         mean = batch.mean.unsqueeze(1).unsqueeze(2)
         std = batch.std.unsqueeze(1).unsqueeze(2)
 
-        return {
+        # Create output dictionary
+        step_output = {
             "fname": batch.fname,
             "slice": batch.slice_num,
             "output": (output * std + mean).cpu().numpy(),
         }
+
+        # Append to the instance list (inherited from MriModule)
+        if hasattr(self, "test_step_outputs"):
+            self.test_step_outputs.append(step_output)
+        else:
+            # Fallback or warning if the attribute wasn't initialized (should not happen with correct MriModule init)
+            print("Warning: self.test_step_outputs not found in UnetModule instance.")
+
+        # return step_output # No longer need to return
 
     def configure_optimizers(self):
         optim = torch.optim.RMSprop(
@@ -330,11 +413,22 @@ class UnetModule(MriModule):
             lr=self.lr,
             weight_decay=self.weight_decay,
         )
-        scheduler = torch.optim.lr_scheduler.StepLR(
-            optim, self.lr_step_size, self.lr_gamma
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optim,
+            mode="min",
+            factor=self.lr_factor,
+            patience=self.lr_patience,
         )
 
-        return [optim], [scheduler]
+        return {
+            "optimizer": optim,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "val_loss",
+                "interval": "epoch",
+                "frequency": 1,
+            },
+        }
 
     @staticmethod
     def add_model_specific_args(parent_parser):  # pragma: no-cover
@@ -369,13 +463,16 @@ class UnetModule(MriModule):
             "--lr", default=0.001, type=float, help="RMSProp learning rate"
         )
         parser.add_argument(
-            "--lr_step_size",
-            default=40,
-            type=int,
-            help="Epoch at which to decrease step size",
+            "--lr_factor",
+            default=0.1,
+            type=float,
+            help="Factor for ReduceLROnPlateau scheduler",
         )
         parser.add_argument(
-            "--lr_gamma", default=0.1, type=float, help="Amount to decrease step size"
+            "--lr_patience",
+            default=3,
+            type=int,
+            help="Patience for ReduceLROnPlateau scheduler",
         )
         parser.add_argument(
             "--weight_decay",

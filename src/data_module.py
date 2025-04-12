@@ -288,16 +288,15 @@ class FastMriDataModule(pl.LightningDataModule):
         dataloader = torch.utils.data.DataLoader(
             dataset=dataset,
             batch_size=self.batch_size,
-            num_workers=0,#self.num_workers,
-            worker_init_fn=worker_init_fn,# if self.distributed_sampler else None,
+            num_workers=self.num_workers,
             sampler=sampler,
             shuffle=is_train if sampler is None else False,
-            #persistent_workers=True if self.num_workers >= 1 else False,
-            #pin_memory=True,
-            #pin_memory_device="cpu"
+            persistent_workers=True if self.num_workers >= 1 else False,
+            pin_memory=False,
+            # pin_memory_device="cpu"
         )
-        #iter(dataloader)
-        #print(next(iter(dataloader)))
+        # iter(dataloader)
+        # print(next(iter(dataloader)))
 
         return dataloader
 

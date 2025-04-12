@@ -2,6 +2,7 @@
 Optimized Sequential U-Net Experiments with Proper Hyperparameter Search
 Fixed for running in Jupyter notebook while maintaining functionality
 """
+
 import fastmri
 import numpy as np
 import torch
@@ -23,27 +24,63 @@ from argparse import ArgumentParser
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.tuner.tuning import Tuner
 import multiprocessing as mp
+import warnings
+
+# Suppress specific warnings
+warnings.filterwarnings(
+    "ignore",
+    message="The .*dataloader' does not have many workers.*",
+    category=UserWarning,
+)
+warnings.filterwarnings(
+    "ignore",
+    message="torch.cuda.amp.GradScaler is enabled, but CUDA is not available.  Disabling.",
+    category=UserWarning,
+)
+warnings.filterwarnings(
+    "ignore",
+    message="User provided device_type of 'cuda', but CUDA is not available. Disabling",
+    category=UserWarning,
+)
+
 
 # Function to find optimal batch size directly
-def find_optimal_batch_size(configs, experiment_name, max_batch_size, log_file, num_workers, 
-                            challenge, precision, train_transform, val_transform, test_transform,
-                            path_config, baseline_batch_size):
+def find_optimal_batch_size(
+    configs,
+    experiment_name,
+    max_batch_size,
+    log_file,
+    num_workers,
+    challenge,
+    precision,
+    train_transform,
+    val_transform,
+    test_transform,
+    path_config,
+    baseline_batch_size,
+):
     """
     Find the optimal batch size without using separate processes
     """
     with open(log_file, "a") as f:
-        f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Starting batch size search for {experiment_name}\n")
-    
+        f.write(
+            f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Starting batch size search for {experiment_name}\n"
+        )
+
     print(f"\nFinding optimal batch size for {experiment_name}...")
-    
+
     # Start with a range of batch sizes that make sense for M4 Max
     # Try fewer batch sizes to reduce search time
-    batch_sizes = [8, 16, 24, 32, 48]
+    batch_sizes = [
+        8,
+        16,
+        24,
+    ]  # Consider adjusting this range based on typical GPU memory
     batch_sizes = [bs for bs in batch_sizes if bs <= max_batch_size]
-    
-    # Dictionary to store memory usage per batch size
-    memory_usage = {}
-    
+
+    # Dictionary to store timing results per batch size
+    timing_results = {}
+
     # Create a minimal dataset for testing batch sizes
     mini_data_module = FastMriDataModule(
         data_path=fetch_dir("knee_path", path_config),
@@ -53,63 +90,72 @@ def find_optimal_batch_size(configs, experiment_name, max_batch_size, log_file, 
         test_transform=test_transform,
         sample_rate=0.05,  # Use only 5% of data for quick testing
         num_workers=num_workers,
-        only_annotated=True
+        only_annotated=True,
+        distributed_sampler=False,
     )
-    
+
     # Try each batch size directly without multiprocessing
     for batch_size in batch_sizes:
         try:
             print(f"  Testing batch size {batch_size}...")
-            
+
             # Create a small model for testing
             test_model = UnetModule(
-                in_chans=configs['in_chans'],
-                out_chans=configs['out_chans'],
-                chans=configs['chans'] // 2,  # Reduce channels for faster testing
-                num_pool_layers=configs['num_pool_layers'],
-                drop_prob=configs['drop_prob'],
-                lr=configs['lr'],
-                metric=configs['metric'],
-                roi_weight=configs['roi_weight'],
-                attn_layer=configs['attn_layer'],
-                use_roi=configs['use_roi'],
-                use_attention_gates=configs['use_attention_gates'],
+                in_chans=configs["in_chans"],
+                out_chans=configs["out_chans"],
+                chans=configs["chans"],
+                num_pool_layers=configs["num_pool_layers"],
+                drop_prob=configs["drop_prob"],
+                lr=configs["lr"],
+                metric=configs["metric"],
+                roi_weight=configs["roi_weight"],
+                attn_layer=configs["attn_layer"],
+                use_roi=configs["use_roi"],
+                use_attention_gates=configs["use_attention_gates"],
             )
-            
+
             # Override mini_data_module's batch size
             mini_data_module.batch_size = batch_size
-            
+
             # Create simple trainer with minimal setup
             trainer = pl.Trainer(
-                devices=configs['num_gpus'],
+                devices=configs["num_gpus"],
                 max_epochs=1,
-                accelerator=configs['backend'],
+                accelerator=configs["backend"],
                 logger=False,
                 enable_checkpointing=False,
                 enable_model_summary=False,
                 enable_progress_bar=True,
-                precision=precision,     # Use precision based on backend
-                limit_train_batches=100,   # Only run 1 batch for testing
-                limit_val_batches=20,     # Skip validation
+                precision=precision,  # Use precision based on backend
+                limit_train_batches=20,  # Increase batches slightly for better timing
+                limit_val_batches=5,  # Keep validation minimal
                 strategy="auto",
-                use_distributed_sampler=False
+                use_distributed_sampler=False,
             )
-            
-            
-            # Prepare data to see if it fits in memory
-            trainer.fit(test_model, datamodule=mini_data_module)
-            
-            # If we get here, the batch size works
-            memory_usage[batch_size] = batch_size  # Use batch size as proxy for memory usage
-            
-            val_loss = trainer.callback_metrics.get("validation_loss", torch.tensor(float('inf'))).item()
-            
-            print(f"  Batch size {batch_size} completed successfully, validation loss = {val_loss:.20f}")
-            
-            # Clean up to free memory
-            del trainer
-            torch.cuda.empty_cache() if torch.cuda.is_available() else None
-            
+
+            # Prepare data to see if it fits in memory and time the fit process
+            if __name__ == "__main__":
+                print(f"  Starting batch size test for batch size {batch_size}")
+                start_time = time.time()
+                trainer.fit(test_model, datamodule=mini_data_module)
+                end_time = time.time()
+                duration = end_time - start_time
+
+                # If we get here, the batch size works
+                timing_results[batch_size] = duration
+
+                val_loss = trainer.callback_metrics.get(
+                    "val_loss", torch.tensor(float("inf"))
+                ).item()
+
+                print(
+                    f"  Batch size {batch_size} completed successfully in {duration:.2f} seconds, validation loss = {val_loss:.6f}"
+                )
+
+                # Clean up to free memory
+                del trainer, test_model
+                torch.cuda.empty_cache() if torch.cuda.is_available() else None
+
         except Exception as e:
             print(f"  Batch size {batch_size} failed with error: {type(e).__name__}")
             print(f"  Error details: {str(e)}")
@@ -120,86 +166,115 @@ def find_optimal_batch_size(configs, experiment_name, max_batch_size, log_file, 
             # break code execution
             raise e
             break
-    
-    # Find the largest batch size that worked
-    optimal_batch_size = max(memory_usage.keys()) if memory_usage else baseline_batch_size
-    
+
+    # Find the batch size with the fastest execution time
+    if timing_results:
+        optimal_batch_size = min(timing_results, key=timing_results.get)
+        fastest_time = timing_results[optimal_batch_size]
+        print(
+            f"  Fastest time ({fastest_time:.2f}s) achieved with batch size {optimal_batch_size}."
+        )
+    else:
+        optimal_batch_size = baseline_batch_size
+        print(
+            f"  No batch sizes completed successfully. Falling back to baseline: {baseline_batch_size}"
+        )
+
     with open(log_file, "a") as f:
-        f.write(f"  Optimal batch size for {experiment_name}: {optimal_batch_size}\n")
-    
+        f.write(
+            f"  Optimal batch size for {experiment_name}: {optimal_batch_size} (based on speed)\n"
+        )
+
     print(f"  Optimal batch size for {experiment_name}: {optimal_batch_size}")
     return optimal_batch_size
 
+
 # Function to manually find a good learning rate
-def find_optimal_learning_rate(configs, experiment_name, log_file, hyperparam_dir,
-                               num_workers, challenge, precision, train_transform, val_transform, test_transform,
-                               path_config):
+def find_optimal_learning_rate(
+    configs,
+    experiment_name,
+    log_file,
+    hyperparam_dir,
+    num_workers,
+    challenge,
+    precision,
+    train_transform,
+    val_transform,
+    test_transform,
+    path_config,
+):
     """
     Manual approach to find a good learning rate without spawning multiple processes
     """
     with open(log_file, "a") as f:
-        f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Starting learning rate search for {experiment_name}\n")
-    
+        f.write(
+            f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Starting learning rate search for {experiment_name}\n"
+        )
+
     print(f"\nFinding optimal learning rate for {experiment_name}...")
-    
+
     # Define a range of learning rates to try
     lr_values = [0.0001, 0.0003, 0.001, 0.003, 0.01]
-    
-    # Sample a small subset of data for quick LR testing
+
+    # Create a minimal dataset for testing batch sizes
     mini_data_module = FastMriDataModule(
         data_path=fetch_dir("knee_path", path_config),
         challenge=challenge,
         train_transform=train_transform,
         val_transform=val_transform,
         test_transform=test_transform,
-        batch_size=configs['batch_size'],
+        batch_size=configs["batch_size"],
         sample_rate=0.05,  # Use only 5% of data
         num_workers=num_workers,
-        only_annotated=True
+        only_annotated=True,
     )
-    
+
     losses = []
-    
+
     # Try each learning rate
     for lr in lr_values:
         # Create a model with current configuration and this learning rate
         model = UnetModule(
-            in_chans=configs['in_chans'],
-            out_chans=configs['out_chans'],
-            chans=configs['chans'],
-            num_pool_layers=configs['num_pool_layers'],
-            drop_prob=configs['drop_prob'],
+            in_chans=configs["in_chans"],
+            out_chans=configs["out_chans"],
+            chans=configs["chans"],
+            num_pool_layers=configs["num_pool_layers"],
+            drop_prob=configs["drop_prob"],
             lr=lr,  # Test this learning rate
-            metric=configs['metric'],
-            roi_weight=configs['roi_weight'],
-            attn_layer=configs['attn_layer'],
-            use_roi=configs['use_roi'],
-            use_attention_gates=configs['use_attention_gates'],
+            metric=configs["metric"],
+            roi_weight=configs["roi_weight"],
+            attn_layer=configs["attn_layer"],
+            use_roi=configs["use_roi"],
+            use_attention_gates=configs["use_attention_gates"],
         )
-        
+
         # Create a trainer for quick LR testing
         trainer = pl.Trainer(
-            devices=configs['num_gpus'],
-            accelerator=configs['backend'],
+            devices=configs["num_gpus"],
+            accelerator=configs["backend"],
             logger=False,
             enable_checkpointing=False,
             enable_model_summary=False,
             max_epochs=1,
-            limit_train_batches=100,  # Run only 10 batches
-            limit_val_batches=20,     # Run only 5 val batches
-            precision=precision,     # Use precision based on backend
+            limit_train_batches=50,  # Run only 10 batches
+            limit_val_batches=20,  # Run only 5 val batches
+            precision=precision,  # Use precision based on backend
         )
-        
+
         try:
             # Train for a short time
-            trainer.fit(model, datamodule=mini_data_module)
-            
+            if __name__ == "__main__":
+                print(f"  Starting learning rate test for learning rate {lr}")
+                trainer.fit(model, datamodule=mini_data_module)
+
             # Get the final validation loss
-            val_loss = trainer.callback_metrics.get("validation_loss", torch.tensor(float('inf'))).item()
+            val_loss = trainer.callback_metrics.get(
+                "val_loss", torch.tensor(float("inf"))
+            ).item()
             losses.append((lr, val_loss))
-            
+
             print(f"  Learning rate {lr}: validation loss = {val_loss:.20f}")
-            
+
         except Exception as e:
             print(f"  Learning rate {lr} failed with error: {type(e).__name__}")
             print(f"  Error details: {str(e)}")
@@ -207,38 +282,43 @@ def find_optimal_learning_rate(configs, experiment_name, log_file, hyperparam_di
             print(f"  Full traceback: {str(e.__traceback__)}")
             raise e
             # Continue to the next learning rate
-        
+
         # Clean up
         del trainer, model
         torch.cuda.empty_cache() if torch.cuda.is_available() else None
-    
+
     # Find the learning rate with the lowest validation loss
     if losses:
         best_lr, best_loss = min(losses, key=lambda x: x[1])
         print(f"  Best learning rate: {best_lr} (loss: {best_loss:.6f})")
-        
+
         # Plot learning rate vs loss
         plt.figure(figsize=(10, 6))
         lrs, loss_values = zip(*losses)
-        plt.plot(lrs, loss_values, 'o-')
-        plt.xscale('log')
-        plt.xlabel('Learning Rate')
-        plt.ylabel('Validation Loss')
-        plt.title(f'Learning Rate Search for {experiment_name}')
+        plt.plot(lrs, loss_values, "o-")
+        plt.xscale("log")
+        plt.xlabel("Learning Rate")
+        plt.ylabel("Validation Loss")
+        plt.title(f"Learning Rate Search for {experiment_name}")
         plt.grid(True)
         plt.savefig(hyperparam_dir / f"{experiment_name}_lr_search.png")
         plt.close()
-        
+
         with open(log_file, "a") as f:
-            f.write(f"  Best learning rate for {experiment_name}: {best_lr} (loss: {best_loss:.6f})\n")
-        
+            f.write(
+                f"  Best learning rate for {experiment_name}: {best_lr} (loss: {best_loss:.6f})\n"
+            )
+
         return best_lr
     else:
         print(f"  No valid learning rates found. Using default: {configs['lr']}")
         with open(log_file, "a") as f:
-            f.write(f"  No valid learning rates found. Using default: {configs['lr']}\n")
-        
-        return configs['lr']
+            f.write(
+                f"  No valid learning rates found. Using default: {configs['lr']}\n"
+            )
+
+        return configs["lr"]
+
 
 # Main execution function
 def run_experiments():
@@ -251,11 +331,39 @@ def run_experiments():
     except:
         pass  # Skip if not available
 
+    # Dictionary to store previously optimized hyperparameters
+    # Extracted from experiment_log.txt as of last successful run in provided log
+    OPTIMIZED_PARAMS = {
+        "unet_baseline_l1": {"batch_size": 8, "lr": 0.0001},
+        "unet_roi_focus_l1_roi": {"batch_size": 8, "lr": 0.0001},
+        "unet_cbam_l1_attn": {"batch_size": 8, "lr": 0.0001},
+        # Add entries for other experiments as they are successfully run
+        # "unet_attention_gates_l1_roi_agate": { ... },
+        # "unet_full_attention_l1_roi_attn_agate": { ... },
+    }
+
+    # Ask user whether to use stored params or rerun search
+    use_stored_params_input = (
+        input("Use stored optimal batch size and learning rate? (y/n, default: y): ")
+        .lower()
+        .strip()
+    )
+    USE_STORED_PARAMS = not (
+        use_stored_params_input == "n" or use_stored_params_input == "no"
+    )
+
+    if USE_STORED_PARAMS:
+        print("\n>>> Attempting to use stored hyperparameters. <<<")
+    else:
+        print("\n>>> Rerunning hyperparameter search for all selected experiments. <<<")
+
     # Common parameters for all experiments
     path_config = pathlib.Path("fastmri_dirs.yaml")
     max_epochs = 15  # Set this to your desired number of epochs
     baseline_batch_size = 16  # Start with a higher baseline for M4 Max
-    num_workers = 2  # Set to 1 to minimize multiprocessing issues but still have some parallelism
+    num_workers = (
+        0  # Set to 1 to minimize multiprocessing issues but still have some parallelism
+    )
     challenge = "singlecoil"
     num_gpus = 1
     backend = "mps"  # Metal Performance Shaders for Apple Silicon
@@ -264,8 +372,8 @@ def run_experiments():
     # MPS does not fully support AMP the same way as CUDA
     use_amp = True  # By default, use AMP on MPS
     if backend == "mps":
-        precision = 32  # Use 32-bit precision on MPS
-        #precision = "16-mixed"  # Use 16-bit precision on MPS
+        # precision = 32  # Use 32-bit precision on MPS
+        precision = "16-mixed"  # Use 16-bit precision on MPS
     else:
         precision = 16  # Use 16-bit precision on other backends (CUDA)
 
@@ -278,8 +386,8 @@ def run_experiments():
                 "attn_layer": False,
                 "metric": "l1",
                 "use_roi": False,
-                "use_attention_gates": False
-            }
+                "use_attention_gates": False,
+            },
         },
         {
             "name": "roi_focus",
@@ -288,8 +396,8 @@ def run_experiments():
                 "attn_layer": False,
                 "metric": "l1",
                 "use_roi": True,
-                "use_attention_gates": False
-            }
+                "use_attention_gates": False,
+            },
         },
         {
             "name": "cbam",
@@ -298,8 +406,8 @@ def run_experiments():
                 "attn_layer": True,
                 "metric": "l1",
                 "use_roi": False,
-                "use_attention_gates": False
-            }
+                "use_attention_gates": False,
+            },
         },
         {
             "name": "attention_gates",
@@ -308,8 +416,8 @@ def run_experiments():
                 "attn_layer": False,
                 "metric": "l1",
                 "use_roi": True,
-                "use_attention_gates": True
-            }
+                "use_attention_gates": True,
+            },
         },
         {
             "name": "full_attention",
@@ -318,9 +426,9 @@ def run_experiments():
                 "attn_layer": True,
                 "metric": "l1",
                 "use_roi": True,
-                "use_attention_gates": True
-            }
-        }
+                "use_attention_gates": True,
+            },
+        },
     ]
 
     # Create results directory
@@ -334,7 +442,9 @@ def run_experiments():
     # Log file to track progress
     log_file = results_dir / "experiment_log.txt"
     with open(log_file, "a") as f:
-        f.write(f"\n\n==== STARTING NEW EXPERIMENT RUN {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ====\n")
+        f.write(
+            f"\n\n==== STARTING NEW EXPERIMENT RUN {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ====\n"
+        )
 
     # Set global random seed for reproducibility
     pl.seed_everything(42)
@@ -346,41 +456,65 @@ def run_experiments():
     test_transform = T.UnetDataTransform(challenge)
 
     # Run each experiment in sequence
-    for exp_idx, experiment in enumerate(experiments):
+    # Filter experiments to run only the desired one(s)
+    target_experiment_names = [
+        "attention_gates",
+        "full_attention",
+        "cbam",
+        "roi_focus",
+        "baseline",
+    ]  # Add other names if needed, e.g., "full_attention"
+    experiments_to_run = [
+        exp for exp in experiments if exp["name"] in target_experiment_names
+    ]
+
+    if not experiments_to_run:
+        print(f"ERROR: No experiments found with names: {target_experiment_names}")
+        return
+
+    print(f"\n>>> Running only specified experiments: {target_experiment_names} <<<")
+
+    for exp_idx, experiment in enumerate(experiments_to_run):
         # Log experiment start
         with open(log_file, "a") as f:
-            f.write(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Starting experiment {exp_idx+1}/{len(experiments)}: {experiment['name']} - {experiment['description']}\n")
-            for param_name, param_value in experiment['params'].items():
+            f.write(
+                f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Starting experiment {exp_idx+1}/{len(experiments_to_run)}: {experiment['name']} - {experiment['description']}\n"
+            )
+            for param_name, param_value in experiment["params"].items():
                 f.write(f"  {param_name}: {param_value}\n")
-        
+
         print(f"\n{'='*80}")
-        print(f"Starting experiment {exp_idx+1}/{len(experiments)}: {experiment['name']} - {experiment['description']}")
+        print(
+            f"Starting experiment {exp_idx+1}/{len(experiments_to_run)}: {experiment['name']} - {experiment['description']}"
+        )
         print(f"{'='*80}")
-        
+
         # Extract parameters for this experiment
-        attn_layer = experiment['params']['attn_layer']
-        metric = experiment['params']['metric']
-        use_roi = experiment['params']['use_roi']
-        use_attention_gates = experiment['params']['use_attention_gates']
-        
+        attn_layer = experiment["params"]["attn_layer"]
+        metric = experiment["params"]["metric"]
+        use_roi = experiment["params"]["use_roi"]
+        use_attention_gates = experiment["params"]["use_attention_gates"]
+
         # Create experiment name
         exp_name = f"unet_{experiment['name']}"
-        version_name = f"{exp_name}_{metric}" + \
-                      ("_roi" if use_roi else "") + \
-                      ("_attn" if attn_layer else "") + \
-                      ("_agate" if use_attention_gates else "")
-        
+        version_name = (
+            f"{exp_name}_{metric}"
+            + ("_roi" if use_roi else "")
+            + ("_attn" if attn_layer else "")
+            + ("_agate" if use_attention_gates else "")
+        )
+
         # Experiment directory
         exp_dir = fetch_dir("log_path", path_config) / "unet" / version_name
         os.makedirs(exp_dir, exist_ok=True)
-        
+
         # Set up TensorBoard logger
         tensorboard = pl_loggers.TensorBoardLogger(
             save_dir=str(fetch_dir("log_path", path_config)),
             name="unet",
-            version=version_name
+            version=version_name,
         )
-        
+
         # Create model configuration
         configs = dict(
             challenge=challenge,
@@ -399,8 +533,8 @@ def run_experiments():
             num_pool_layers=3,
             drop_prob=0.0,
             lr=0.001,  # Default, will be updated after search
-            lr_step_size=40,
-            lr_gamma=0.1,
+            lr_factor=0.1,  # Default ReduceLROnPlateau factor
+            lr_patience=3,  # Default ReduceLROnPlateau patience
             weight_decay=0.0,
             max_epochs=max_epochs,
             metric=metric,
@@ -409,15 +543,79 @@ def run_experiments():
             use_roi=use_roi,
             use_attention_gates=use_attention_gates,
         )
-        
-        # Find optimal batch size for this configuration
-        max_batch_size = 32  # Set a maximum batch size for testing
-        optimal_batch_size = find_optimal_batch_size(configs, version_name, max_batch_size, log_file, 
-                                                     num_workers, challenge, precision, train_transform,
-                                                     val_transform, test_transform, path_config, baseline_batch_size)
-        configs['batch_size'] = optimal_batch_size
-        
-        # Create a data module with the optimal batch size
+
+        # --- Start of Modified Section ---
+        run_hyperparam_search = True  # Default to running search
+        if USE_STORED_PARAMS and version_name in OPTIMIZED_PARAMS:
+            print(f"  Found stored parameters for {version_name}.")
+            stored_values = OPTIMIZED_PARAMS[version_name]
+            optimal_batch_size = stored_values["batch_size"]
+            optimal_lr = stored_values["lr"]
+            configs["batch_size"] = optimal_batch_size
+            configs["lr"] = optimal_lr
+            run_hyperparam_search = False  # Skip search
+            # Log the usage of stored parameters
+            with open(log_file, "a") as f:
+                f.write(
+                    f"  Using stored hyperparameters: Batch Size={optimal_batch_size}, LR={optimal_lr}\n"
+                )
+        elif USE_STORED_PARAMS:
+            print(f"  Stored parameters not found for {version_name}. Running search.")
+        # --- End of Modified Section ---
+
+        if run_hyperparam_search:
+            print(f"  Running hyperparameter search for {version_name}...")
+            # Find optimal batch size
+            max_batch_size = 32  # Set a maximum batch size for testing
+            optimal_batch_size = find_optimal_batch_size(
+                configs,
+                version_name,
+                max_batch_size,
+                log_file,
+                num_workers,
+                challenge,
+                precision,
+                train_transform,
+                val_transform,
+                test_transform,
+                path_config,
+                baseline_batch_size,
+            )
+            configs["batch_size"] = optimal_batch_size
+
+            # Find optimal learning rate
+            optimal_lr = find_optimal_learning_rate(
+                configs,
+                version_name,
+                log_file,
+                hyperparam_dir,
+                num_workers,
+                challenge,
+                precision,
+                train_transform,
+                val_transform,
+                test_transform,
+                path_config,
+            )
+            configs["lr"] = optimal_lr
+        # <---- End of the if run_hyperparam_search block
+
+        # Log the final hyperparameters used (either stored or found)
+        with open(log_file, "a") as f:
+            f.write(
+                f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Final hyperparameters for {version_name}:\n"
+            )
+            f.write(f"  Batch size: {configs['batch_size']}\n")
+            f.write(f"  Learning rate: {configs['lr']}\n")
+
+        print(f"Final hyperparameters for {version_name}:")
+        print(f"  Batch size: {configs['batch_size']}")
+        print(f"  Learning rate: {configs['lr']}")
+
+        # Create data module with the final batch size
+        print(
+            f"  Creating DataModule with batch size: {configs['batch_size']}"
+        )  # Added print for verification
         data_module = FastMriDataModule(
             data_path=fetch_dir("knee_path", path_config),
             challenge=challenge,
@@ -425,50 +623,37 @@ def run_experiments():
             val_transform=val_transform,
             test_transform=test_transform,
             test_path=None,
-            batch_size=optimal_batch_size,
+            batch_size=configs["batch_size"],  # Use final batch size
             num_workers=num_workers,
-            only_annotated=True  # Use only annotated slices
+            only_annotated=True,
         )
-        
-        # Find optimal learning rate for this configuration
-        optimal_lr = find_optimal_learning_rate(configs, version_name, log_file, hyperparam_dir, num_workers, 
-                                                challenge, precision, train_transform, val_transform,
-                                                test_transform, path_config)
-        configs['lr'] = optimal_lr
-        
-        # Log the optimized hyperparameters
-        with open(log_file, "a") as f:
-            f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Optimized hyperparameters for {version_name}:\n")
-            f.write(f"  Batch size: {optimal_batch_size}\n")
-            f.write(f"  Learning rate: {optimal_lr}\n")
-        
-        print(f"Optimized hyperparameters for {version_name}:")
-        print(f"  Batch size: {optimal_batch_size}")
-        print(f"  Learning rate: {optimal_lr}")
-        
-        # Create model with optimized hyperparameters
+
+        # Create model with final hyperparameters
+        print(
+            f"  Creating Model with LR: {configs['lr']}"
+        )  # Added print for verification
         model = UnetModule(
-            in_chans=configs['in_chans'],
-            out_chans=configs['out_chans'],
-            chans=configs['chans'],
-            num_pool_layers=configs['num_pool_layers'],
-            drop_prob=configs['drop_prob'],
-            lr=configs['lr'],  # Optimized learning rate
-            lr_step_size=configs['lr_step_size'],
-            lr_gamma=configs['lr_gamma'],
-            weight_decay=configs['weight_decay'],
-            metric=configs['metric'],
-            roi_weight=configs['roi_weight'],
-            attn_layer=configs['attn_layer'],
-            use_roi=configs['use_roi'],
-            use_attention_gates=configs['use_attention_gates'],
+            in_chans=configs["in_chans"],
+            out_chans=configs["out_chans"],
+            chans=configs["chans"],
+            num_pool_layers=configs["num_pool_layers"],
+            drop_prob=configs["drop_prob"],
+            lr=configs["lr"],  # Use final LR
+            lr_factor=configs["lr_factor"],
+            lr_patience=configs["lr_patience"],
+            weight_decay=configs["weight_decay"],
+            metric=configs["metric"],
+            roi_weight=configs["roi_weight"],
+            attn_layer=configs["attn_layer"],
+            use_roi=configs["use_roi"],
+            use_attention_gates=configs["use_attention_gates"],
         )
-        
+
         # Set up callbacks
         callbacks = [
             pl.callbacks.ModelCheckpoint(
                 dirpath=exp_dir / "checkpoints",
-                monitor="validation_loss",
+                monitor="val_loss",
                 mode="min",
                 save_top_k=1,
                 save_last=True,
@@ -477,87 +662,103 @@ def run_experiments():
             pl.callbacks.LearningRateMonitor(logging_interval="epoch"),
             # Early stopping if no improvement for 5 epochs
             pl.callbacks.EarlyStopping(
-                monitor="validation_loss",
-                patience=5,
-                mode="min",
-                verbose=True
-            )
+                monitor="val_loss", patience=5, mode="min", verbose=True
+            ),
         ]
-        
+
         # Create trainer with performance optimizations
         trainer = pl.Trainer(
-            devices=configs['num_gpus'],
-            max_epochs=configs['max_epochs'],
-            default_root_dir=configs['default_root_dir'],
-            accelerator=configs['backend'],
+            devices=configs["num_gpus"],
+            max_epochs=configs["max_epochs"],
+            default_root_dir=configs["default_root_dir"],
+            accelerator=configs["backend"],
             callbacks=callbacks,
             logger=tensorboard,
             precision=precision,  # Use precision based on backend
-            check_val_every_n_epoch=2,  # Reduce validation frequency
+            check_val_every_n_epoch=1,  # Run validation every epoch
             gradient_clip_val=1.0,  # Add gradient clipping for stability
             deterministic=False,  # Disable deterministic mode for speed
         )
-        
+
         # Train model
         try:
             start_time = time.time()
-            trainer.fit(model, datamodule=data_module)
+            print(f"  Starting training for {version_name}...")  # Added print
+            trainer.fit(
+                model, datamodule=data_module
+            )  # data_module should now be defined
             end_time = time.time()
-            
+
             # Log experiment completion
             train_time_mins = (end_time - start_time) / 60
-            best_val_loss = trainer.callback_metrics.get("validation_loss", torch.tensor(float('inf'))).item()
-            
+            best_val_loss = trainer.callback_metrics.get(
+                "val_loss", torch.tensor(float("inf"))
+            ).item()
+
             with open(log_file, "a") as f:
-                f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Completed experiment: {experiment['name']}\n")
+                f.write(
+                    f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Completed experiment: {experiment['name']}\n"
+                )
                 f.write(f"  Training time: {train_time_mins:.2f} minutes\n")
                 f.write(f"  Best validation loss: {best_val_loss:.6f}\n")
                 f.write(f"  Saved model to: {exp_dir}/checkpoints\n")
-            
+
             print(f"Completed experiment: {experiment['name']}")
             print(f"  Training time: {train_time_mins:.2f} minutes")
             print(f"  Best validation loss: {best_val_loss:.6f}")
             print(f"  Saved model to: {exp_dir}/checkpoints")
-            
+
             # Optional: Run a test step with the best model
-            if hasattr(trainer.checkpoint_callback, 'best_model_path') and trainer.checkpoint_callback.best_model_path:
-                print(f"Loading best model from {trainer.checkpoint_callback.best_model_path}")
-                best_model = UnetModule.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
+            if (
+                hasattr(trainer.checkpoint_callback, "best_model_path")
+                and trainer.checkpoint_callback.best_model_path
+            ):
+                print(
+                    f"Loading best model from {trainer.checkpoint_callback.best_model_path}"
+                )
+                best_model = UnetModule.load_from_checkpoint(
+                    trainer.checkpoint_callback.best_model_path
+                )
                 test_results = trainer.test(best_model, datamodule=data_module)
-                
+
                 with open(log_file, "a") as f:
                     f.write(f"  Test results: {test_results}\n")
-                
+
                 print(f"  Test results: {test_results}")
-        
+
         except Exception as e:
             with open(log_file, "a") as f:
-                f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] ERROR in experiment {experiment['name']}: {str(e)}\n")
+                f.write(
+                    f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] ERROR in experiment {experiment['name']}: {str(e)}\n"
+                )
             print(f"ERROR in experiment {experiment['name']}: {str(e)}")
             continue  # Continue to next experiment even if this one fails
-        
+
         # Clear memory between experiments
         torch.cuda.empty_cache() if torch.cuda.is_available() else None
-        
+
         # Add a small delay between experiments
         time.sleep(5)
 
     # Log completion of all experiments
     with open(log_file, "a") as f:
-        f.write(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] All experiments completed!\n")
+        f.write(
+            f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] All experiments completed!\n"
+        )
 
     print("\nAll experiments completed!")
     print(f"See log file at {log_file} for details.")
 
+
 # Execute the proper way depending on environment
 if __name__ == "__main__":
     # Set multiprocessing start method
-    mp.set_start_method('spawn', force=True)
+    mp.set_start_method("spawn", force=True)
     run_experiments()
 else:
     # In a notebook environment, still ensure proper method
     try:
-        mp.set_start_method('spawn', force=True)
+        mp.set_start_method("spawn", force=True)
     except RuntimeError:
         # Method already set
         pass

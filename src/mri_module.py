@@ -35,6 +35,7 @@ class DistributedMetricSum(Metric):
     def compute(self):
         return self.quantity
 
+
 class MriModule(pl.LightningModule):
     """
     Abstract super class for deep larning reconstruction models.
@@ -62,6 +63,7 @@ class MriModule(pl.LightningModule):
         """
         super().__init__()
         self.validation_step_outputs = []
+        self.test_step_outputs = []
 
         self.num_log_images = num_log_images
         self.val_log_indices = None
@@ -72,7 +74,11 @@ class MriModule(pl.LightningModule):
         self.ValLoss = DistributedMetricSum()
         self.TotExamples = DistributedMetricSum()
         self.TotSliceExamples = DistributedMetricSum()
-        self._device_type = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+        self._device_type = torch.device(
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps" if torch.backends.mps.is_available() else "cpu"
+        )
 
     def validation_step_end(self, val_logs):
         # check inputs
@@ -104,7 +110,7 @@ class MriModule(pl.LightningModule):
         # pick a set of images to log if we don't have one already
         if self.val_log_indices is None:
             np.random.seed(42)
-            
+
             self.val_log_indices = list(
                 np.random.permutation(len(self.trainer.val_dataloaders[0]))[
                     : self.num_log_images
@@ -123,7 +129,7 @@ class MriModule(pl.LightningModule):
                 slice_num = int(val_logs["slice_num"][i])
                 key = f"{fname}_slice_{slice_num}"
                 ####
-                #key = f"val_images_idx_{batch_idx}"
+                # key = f"val_images_idx_{batch_idx}"
                 target = val_logs["target"][i].unsqueeze(0)
                 output = val_logs["output"][i].unsqueeze(0)
                 error = torch.abs(target - output)
@@ -146,14 +152,19 @@ class MriModule(pl.LightningModule):
             target = val_logs["target"][i].cpu().numpy()
 
             mse_vals[fname][slice_num] = torch.tensor(
-                evaluate.mse(target, output), dtype=torch.float32, device=self._device_type
+                evaluate.mse(target, output),
+                dtype=torch.float32,
+                device=self._device_type,
             ).view(1)
             target_norms[fname][slice_num] = torch.tensor(
-                evaluate.mse(target, np.zeros_like(target)), dtype=torch.float32, device=self._device_type
+                evaluate.mse(target, np.zeros_like(target)),
+                dtype=torch.float32,
+                device=self._device_type,
             ).view(1)
             ssim_vals[fname][slice_num] = torch.tensor(
                 evaluate.ssim(target[None, ...], output[None, ...], maxval=maxval),
-                dtype=torch.float32, device=self._device_type,
+                dtype=torch.float32,
+                device=self._device_type,
             ).view(1)
             max_vals[fname] = maxval
 
@@ -179,10 +190,11 @@ class MriModule(pl.LightningModule):
         self.logger.experiment.add_image(name, image, global_step=self.global_step)
 
     def on_validation_epoch_end(self):
-        # aggregate losses
-        losses = []
-        image_losses = []
-        roi_losses = []
+        # aggregate losses - No longer needed for val_loss, handled by self.log in validation_step
+        # losses = [] # Removed
+        # No longer need to manually collect these for logging averages
+        # image_losses = []
+        # roi_losses = []
         mse_vals = defaultdict(dict)
         target_norms = defaultdict(dict)
         ssim_vals = defaultdict(dict)
@@ -194,7 +206,7 @@ class MriModule(pl.LightningModule):
         # use dict updates to handle duplicate slices
         for val_log in val_logs:
             # print('\nval_log type: ', type(val_log))
-            losses.append(val_log["val_loss"].view(-1))
+            # losses.append(val_log["val_loss"].view(-1))
 
             # ['batch_idx', 'fname', 'slice_num', 'max_value', 'output', 'target', 'val_loss']
             for k in val_log["mse_vals"].keys():
@@ -205,12 +217,12 @@ class MriModule(pl.LightningModule):
                 ssim_vals[k].update(val_log["ssim_vals"][k])
             for k in val_log["max_vals"]:
                 max_vals[k] = val_log["max_vals"][k]
-                
-            if "val_loss_image" in val_log:
-                image_losses.append(val_log["val_loss_image"].view(-1))  # type: ignore
-            if "val_loss_roi" in val_log:
-                roi_losses.append(val_log["val_loss_roi"].view(-1))  # type: ignore
-                
+
+            # No longer need to manually collect these
+            # if "val_loss_image" in val_log:
+            #     image_losses.append(val_log["val_loss_image"].view(-1))  # type: ignore
+            # if "val_loss_roi" in val_log:
+            #     roi_losses.append(val_log["val_loss_roi"].view(-1))  # type: ignore
 
         # check to make sure we have all files in all metrics
         assert (
@@ -256,46 +268,69 @@ class MriModule(pl.LightningModule):
         metrics["ssim"] = self.SSIM(metrics["ssim"])
         metrics["psnr"] = self.PSNR(metrics["psnr"])
         tot_examples = self.TotExamples(torch.tensor(local_examples))
-        
 
-        val_loss = self.ValLoss(torch.sum(torch.cat(losses), dtype=torch.float32, device=self._device_type))
-        tot_slice_examples = self.TotSliceExamples(
-            torch.tensor(len(losses), dtype=torch.float32, device=self._device_type)
-        )
-        self.log("validation_loss", val_loss / tot_slice_examples, prog_bar=True)
-    #raise ValueError(f"{losses} {metrics} {val_logs}")
-        #else:
-            # Set defaults when no validation loss is available
+        # Log epoch-level val_loss automatically computed by Lightning
+        # No need for manual aggregation here for val_loss
+        # if losses:
+        #     val_loss = self.ValLoss(torch.sum(torch.cat(losses), dtype=torch.float32, device=self._device_type))
+        #     tot_slice_examples = self.TotSliceExamples(
+        #     torch.tensor(len(losses), dtype=torch.float32, device=self._device_type)
+        # )
+        #     self.log("validation_loss", val_loss / tot_slice_examples, prog_bar=True)
+        # else:
+        #     val_loss = self.ValLoss(torch.tensor(0.0, dtype=torch.float32, device=self._device_type))
+        #     tot_slice_examples = self.TotSliceExamples(torch.tensor(0.0, dtype=torch.float32, device=self._device_type))
+        #     self.log("validation_loss", torch.tensor(0.0, dtype=torch.float32, device=self._device_type), prog_bar=True)
+        # raise ValueError(f"{losses} {metrics} {val_logs}")
+        # else:
+        # Set defaults when no validation loss is available
         #    val_loss = self.ValLoss(torch.tensor(0.0, dtype=torch.float32, device=self._device_type))
         #    tot_slice_examples = self.TotSliceExamples(torch.tensor(0.0, dtype=torch.float32, device=self._device_type))
-         #   self.log("validation_loss", torch.tensor(0.0, dtype=torch.float32, device=self._device_type), prog_bar=True)
-        
-        if image_losses:
-            overall_loss = torch.sum(torch.cat(image_losses), dtype=torch.float32, device=self._device_type)
-            self.log('val_metrics/overall_l1', overall_loss / tot_slice_examples, prog_bar=True)
-        if roi_losses:
-            overall_loss = torch.sum(torch.cat(roi_losses), dtype=torch.float32, device=self._device_type)
-            self.log('val_metrics/overall_l1_roi', overall_loss / tot_slice_examples, prog_bar=True)
-        for metric, value in metrics.items():
-            self.log(f"val_metrics/{metric}", value / tot_examples)
+        #   self.log("validation_loss", torch.tensor(0.0, dtype=torch.float32, device=self._device_type), prog_bar=True)
+        # if image_losses:
+        #     overall_loss = torch.sum(
+        #         torch.cat(image_losses), dtype=torch.float32, device=self._device_type
+        #     )
+        #     self.log(
+        #         "val_metrics/overall_l1",
+        #         overall_loss / tot_slice_examples,
+        #         prog_bar=True,
+        #     )
+        # if roi_losses:
+        #     overall_loss = torch.sum(
+        #         torch.cat(roi_losses), dtype=torch.float32, device=self._device_type
+        #     )
+        #     self.log(
+        #         "val_metrics/overall_l1_roi",
+        #         overall_loss / tot_slice_examples,
+        #         prog_bar=True,
+        #     )
+        # for metric, value in metrics.items():
+        #     self.log(f"val_metrics/{metric}", value / tot_examples)
+
+        if (
+            tot_examples > 0
+        ):  # Avoid division by zero if validation didn't run or no examples
+            for metric, value in metrics.items():
+                self.log(f"val_metrics/{metric}", value / tot_examples)
 
         self.validation_step_outputs.clear()
 
-    def test_epoch_end(self, test_logs):
+    def on_test_epoch_start(self):
+        self.test_step_outputs.clear()
+
+    def on_test_epoch_end(self):
         outputs = defaultdict(dict)
 
-        # use dicts for aggregation to handle duplicate slices in ddp mode
-        for log in test_logs:
+        for log in self.test_step_outputs:
             for i, (fname, slice_num) in enumerate(zip(log["fname"], log["slice"])):
                 outputs[fname][int(slice_num.cpu())] = log["output"][i]
 
-        # stack all the slices for each file
         for fname in outputs:
             outputs[fname] = np.stack(
                 [out for _, out in sorted(outputs[fname].items())]
             )
 
-        # pull the default_root_dir if we have a trainer, otherwise save to cwd
         if hasattr(self, "trainer"):
             save_path = pathlib.Path(self.trainer.default_root_dir) / "reconstructions"
         else:
