@@ -7,6 +7,8 @@ LICENSE file in the root directory of this source tree.
 
 from argparse import ArgumentParser
 import numpy as np
+import logging
+from pathlib import Path
 
 import torch
 from torch.nn import functional as F
@@ -284,6 +286,71 @@ class UnetModule(MriModule):
             sync_dist=True,
             batch_size=batch.image.size(0),
         )
+
+        # --- Log images for the first few validation batches of each epoch ---
+        num_batches_to_log = 3  # Log images for the first 3 batches
+        if (
+            batch_idx < num_batches_to_log
+            and self.logger is not None
+            and hasattr(self.logger, "experiment")
+        ):
+            try:
+                # No need for torchvision.utils import here anymore
+
+                # Detach, move to CPU, denormalize
+                output_viz = (output * std + mean).cpu().detach()
+                target_viz = (batch.target * std + mean).cpu().detach()
+
+                # Add channel dimension if missing (B, H, W) -> (B, 1, H, W)
+                if output_viz.ndim == 3:
+                    output_viz = output_viz.unsqueeze(1)
+                if target_viz.ndim == 3:
+                    target_viz = target_viz.unsqueeze(1)
+
+                # Normalize/Clamp to [0, 1] for visualization
+                out_min, out_max = output_viz.min(), output_viz.max()
+                tgt_min, tgt_max = target_viz.min(), target_viz.max()
+                if out_max > out_min:
+                    output_viz = (output_viz - out_min) / (out_max - out_min)
+                if tgt_max > tgt_min:
+                    target_viz = (target_viz - tgt_min) / (tgt_max - tgt_min)
+                output_viz = torch.clamp(output_viz, 0.0, 1.0)
+                target_viz = torch.clamp(target_viz, 0.0, 1.0)
+
+                # Calculate difference
+                diff_viz = torch.abs(output_viz - target_viz)
+
+                # --- Log each image individually ---
+                batch_size = output_viz.shape[0]
+                for i in range(batch_size):
+                    # Get filename and slice number for tagging
+                    try:
+                        fname = Path(
+                            batch.fname[i]
+                        ).stem  # Get filename without extension
+                        slice_num = int(batch.slice_num[i].item())
+                        tag_prefix = f"Validation_Epoch_{self.current_epoch}/Batch_{batch_idx}/{fname}_Slice_{slice_num}"
+                    except Exception:
+                        # Fallback tag if fname/slice access fails for some reason
+                        tag_prefix = f"Validation_Epoch_{self.current_epoch}/Batch_{batch_idx}_Image_{i}"
+
+                    self.logger.experiment.add_image(
+                        f"{tag_prefix}/Output", output_viz[i], self.current_epoch
+                    )
+                    self.logger.experiment.add_image(
+                        f"{tag_prefix}/Target", target_viz[i], self.current_epoch
+                    )
+                    self.logger.experiment.add_image(
+                        f"{tag_prefix}/Difference", diff_viz[i], self.current_epoch
+                    )
+
+            except ImportError:
+                # This should not happen now as we removed the torchvision dependency here
+                pass
+            except Exception as e:
+                logging.warning(
+                    f"Could not log validation images for batch {batch_idx} in epoch {self.current_epoch}: {e}"
+                )
 
         # Calculate metrics for on_validation_epoch_end aggregation
         output_np = (output * std + mean).cpu().numpy()

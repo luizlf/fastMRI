@@ -337,6 +337,7 @@ def run_experiments():
         "unet_baseline_l1": {"batch_size": 8, "lr": 0.0001},
         "unet_roi_focus_l1_roi": {"batch_size": 8, "lr": 0.0001},
         "unet_cbam_l1_attn": {"batch_size": 8, "lr": 0.0001},
+        "unet_full_attention_l1_roi_attn_agate": {"batch_size": 8, "lr": 0.0001},
         # Add entries for other experiments as they are successfully run
         # "unet_attention_gates_l1_roi_agate": { ... },
         # "unet_full_attention_l1_roi_attn_agate": { ... },
@@ -458,11 +459,7 @@ def run_experiments():
     # Run each experiment in sequence
     # Filter experiments to run only the desired one(s)
     target_experiment_names = [
-        "attention_gates",
         "full_attention",
-        "cbam",
-        "roi_focus",
-        "baseline",
     ]  # Add other names if needed, e.g., "full_attention"
     experiments_to_run = [
         exp for exp in experiments if exp["name"] in target_experiment_names

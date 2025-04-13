@@ -123,9 +123,10 @@ class Unet(nn.Module):
                 if self.attn_layer:
                     if i == 0:
                         self.cbam_up = nn.ModuleList()
-                    # CBAM should likely process the output of the ConvBlock before the final 1x1 or before next upsampling
-                    # Let's assume it processes the output 'conv_out_ch' features
-                    self.cbam_up.append(CBAM(conv_out_ch))
+                    # CBAM is applied AFTER concatenation in the forward pass,
+                    # so it needs to be initialized with the number of channels
+                    # *before* the final ConvBlock, which is conv_in_ch (F_g + F_l).
+                    self.cbam_up.append(CBAM(conv_in_ch))
                     # If CBAM is applied here, does it change how features are passed?
                     # The current forward loop applies CBAM *after* concatenation, before the final conv block.
                     # Let's adjust the forward loop later if needed, keep init simpler for now.
