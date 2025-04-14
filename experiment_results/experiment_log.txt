@@ -1,0 +1,4062 @@
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 17:22:29 ====
+
+[2025-04-03 17:22:29] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 17:22:29] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 17:25:31 ====
+
+[2025-04-03 17:25:31] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 17:25:31] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 17:26:23 ====
+
+[2025-04-03 17:26:23] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 17:26:23] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 17:26:23] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 17:27:41 ====
+
+[2025-04-03 17:27:41] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 17:27:41] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 17:27:46 ====
+
+[2025-04-03 17:27:46] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 17:27:46] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 17:27:50] Starting learning rate search for unet_baseline_l1
+  Error in learning rate search: 
+        An attempt has been made to start a new process before the
+        current process has finished its bootstrapping phase.
+
+        This probably means that you are not using fork to start your
+        child processes and you have forgotten to use the proper idiom
+        in the main module:
+
+            if __name__ == '__main__':
+                freeze_support()
+                ...
+
+        The "freeze_support()" line can be omitted if the program
+        is not going to be frozen to produce an executable.
+
+        To fix this issue, refer to the "Safe importing of main module"
+        section in https://docs.python.org/3/library/multiprocessing.html
+        
+  Using default learning rate: 0.001
+[2025-04-03 17:28:23] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 16
+  Learning rate: 0.001
+[2025-04-03 17:28:43] ERROR in experiment baseline: 
+        An attempt has been made to start a new process before the
+        current process has finished its bootstrapping phase.
+
+        This probably means that you are not using fork to start your
+        child processes and you have forgotten to use the proper idiom
+        in the main module:
+
+            if __name__ == '__main__':
+                freeze_support()
+                ...
+
+        The "freeze_support()" line can be omitted if the program
+        is not going to be frozen to produce an executable.
+
+        To fix this issue, refer to the "Safe importing of main module"
+        section in https://docs.python.org/3/library/multiprocessing.html
+        
+
+[2025-04-03 17:28:43] Starting experiment 2/5: roi_focus - U-Net with ROI focus
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: False
+[2025-04-03 17:28:43] Starting batch size search for unet_roi_focus_l1_roi
+  Optimal batch size for unet_roi_focus_l1_roi: 16
+[2025-04-03 17:28:46] Starting learning rate search for unet_roi_focus_l1_roi
+  Error in learning rate search: 
+        An attempt has been made to start a new process before the
+        current process has finished its bootstrapping phase.
+
+        This probably means that you are not using fork to start your
+        child processes and you have forgotten to use the proper idiom
+        in the main module:
+
+            if __name__ == '__main__':
+                freeze_support()
+                ...
+
+        The "freeze_support()" line can be omitted if the program
+        is not going to be frozen to produce an executable.
+
+        To fix this issue, refer to the "Safe importing of main module"
+        section in https://docs.python.org/3/library/multiprocessing.html
+        
+  Using default learning rate: 0.001
+[2025-04-03 17:29:20] Optimized hyperparameters for unet_roi_focus_l1_roi:
+  Batch size: 16
+  Learning rate: 0.001
+[2025-04-03 17:29:40] ERROR in experiment roi_focus: 
+        An attempt has been made to start a new process before the
+        current process has finished its bootstrapping phase.
+
+        This probably means that you are not using fork to start your
+        child processes and you have forgotten to use the proper idiom
+        in the main module:
+
+            if __name__ == '__main__':
+                freeze_support()
+                ...
+
+        The "freeze_support()" line can be omitted if the program
+        is not going to be frozen to produce an executable.
+
+        To fix this issue, refer to the "Safe importing of main module"
+        section in https://docs.python.org/3/library/multiprocessing.html
+        
+
+[2025-04-03 17:29:40] Starting experiment 3/5: cbam - U-Net with CBAM
+  attn_layer: True
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 17:29:40] Starting batch size search for unet_cbam_l1_attn
+  Optimal batch size for unet_cbam_l1_attn: 16
+[2025-04-03 17:29:44] Starting learning rate search for unet_cbam_l1_attn
+  Error in learning rate search: 'LearningRateFinder' object has no attribute 'optimal_lr'
+  Using default learning rate: 0.001
+[2025-04-03 17:30:00] Optimized hyperparameters for unet_cbam_l1_attn:
+  Batch size: 16
+  Learning rate: 0.001
+[2025-04-03 17:30:00] Completed experiment: cbam
+  Training time: 0.01 minutes
+  Best validation loss: inf
+  Saved model to: logs/unet/unet_cbam_l1_attn/checkpoints
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-03 17:30:01] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 17:38:51 ====
+
+[2025-04-03 17:38:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 17:38:51] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 17:38:51] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 17:38:56 ====
+
+[2025-04-03 17:38:56] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 17:38:56] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 17:38:56] Starting learning rate search for unet_baseline_l1
+  No valid learning rates found. Using default: 0.001
+[2025-04-03 17:39:14] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 16
+  Learning rate: 0.001
+[2025-04-03 17:39:22] Completed experiment: baseline
+  Training time: 0.13 minutes
+  Best validation loss: inf
+  Saved model to: logs/unet/unet_baseline_l1/checkpoints
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 17:40:01 ====
+
+[2025-04-03 17:40:01] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 17:40:01] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 17:40:01] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 17:40:06 ====
+
+[2025-04-03 17:40:06] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 17:40:06] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 17:40:06] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 18:58:32 ====
+
+[2025-04-03 18:58:32] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 18:58:32] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 18:58:32] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:47 ====
+
+[2025-04-03 19:03:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:47] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:03:51 ====
+
+[2025-04-03 19:03:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:03:51] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:53] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:53] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:53] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:53] Starting learning rate search for unet_baseline_l1
+[2025-04-03 19:03:53] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:53] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:54] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:54] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:54] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:54] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:54] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:54] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:54] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:54] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:54] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:03:54] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:04:53 ====
+
+[2025-04-03 19:04:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:04:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:31 ====
+
+[2025-04-03 19:05:31] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:31] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:34 ====
+
+[2025-04-03 19:05:34] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:34] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:34 ====
+
+[2025-04-03 19:05:34] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:34] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:34 ====
+
+[2025-04-03 19:05:34] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:34] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:34 ====
+
+[2025-04-03 19:05:34] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:34] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:34 ====
+
+[2025-04-03 19:05:34] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:34] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:34 ====
+
+[2025-04-03 19:05:34] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:34] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:34 ====
+
+[2025-04-03 19:05:34] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:34] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:34 ====
+
+[2025-04-03 19:05:34] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:34 ====
+[2025-04-03 19:05:34] Starting batch size search for unet_baseline_l1
+
+[2025-04-03 19:05:34] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:34] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:34 ====
+
+[2025-04-03 19:05:34] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:34] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:35 ====
+
+[2025-04-03 19:05:35] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:35] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:35 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:35 ====
+
+[2025-04-03 19:05:35] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-03 19:05:35] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:35] Starting batch size search for unet_baseline_l1
+[2025-04-03 19:05:35] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:35 ====
+
+[2025-04-03 19:05:35] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:35] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:35 ====
+
+[2025-04-03 19:05:35] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:35] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:05:35 ====
+
+[2025-04-03 19:05:35] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:05:35] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:36] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:36] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:36] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:36] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:37] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:37] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:37] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:37] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:37] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:37] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:37] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:37] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:37] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:37] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:37] Starting learning rate search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16
+[2025-04-03 19:05:37] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:07:59 ====
+
+[2025-04-03 19:07:59] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:07:59] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:08:03 ====
+
+[2025-04-03 19:08:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:08:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-03 19:11:19 ====
+
+[2025-04-03 19:11:19] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-03 19:11:19] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-03 19:11:29] Starting learning rate search for unet_baseline_l1
+  No valid learning rates found. Using default: 0.001
+[2025-04-03 19:11:51] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.001
+[2025-04-03 22:56:58] Completed experiment: baseline
+  Training time: 225.11 minutes
+  Best validation loss: 0.283395
+  Saved model to: logs/unet/unet_baseline_l1/checkpoints
+[2025-04-03 22:56:58] ERROR in experiment baseline: Weights only load failed. This file can still be loaded, to do so you have two options, [1mdo those steps only if you trust the source of the checkpoint[0m. 
+	(1) In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`. Re-running `torch.load` with `weights_only` set to `False` will likely succeed, but it can result in arbitrary code execution. Do it only if you got the file from a trusted source.
+	(2) Alternatively, to load with `weights_only=True` please check the recommended steps in the following error message.
+	WeightsUnpickler error: Unsupported global: GLOBAL pathlib._local.PosixPath was not an allowed global by default. Please use `torch.serialization.add_safe_globals([PosixPath])` or the `torch.serialization.safe_globals([PosixPath])` context manager to allowlist this global if you trust this class/function.
+
+Check the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html.
+
+[2025-04-03 22:56:58] Starting experiment 2/5: roi_focus - U-Net with ROI focus
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: False
+[2025-04-03 22:56:58] Starting batch size search for unet_roi_focus_l1_roi
+  Optimal batch size for unet_roi_focus_l1_roi: 32
+[2025-04-03 22:57:32] Starting learning rate search for unet_roi_focus_l1_roi
+  No valid learning rates found. Using default: 0.001
+[2025-04-03 22:58:01] Optimized hyperparameters for unet_roi_focus_l1_roi:
+  Batch size: 32
+  Learning rate: 0.001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 11:26:17 ====
+
+[2025-04-04 11:26:17] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 11:26:17] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-04 11:26:35] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 11:41:01 ====
+
+[2025-04-04 11:41:01] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 11:41:01] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 11:43:55 ====
+
+[2025-04-04 11:43:55] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 11:43:55] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:02:20 ====
+
+[2025-04-04 12:02:20] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:02:20] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:28:26 ====
+
+[2025-04-04 12:28:26] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:28:26] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:28:30 ====
+
+[2025-04-04 12:28:30] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:28:30] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:28:30 ====
+
+[2025-04-04 12:28:30] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:28:30] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:28:30 ====
+
+[2025-04-04 12:28:30] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:28:30 ====
+[2025-04-04 12:28:30] Starting batch size search for unet_baseline_l1
+
+[2025-04-04 12:28:30] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:28:30] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:28:30 ====
+
+[2025-04-04 12:28:30] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:28:30] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:28:30 ====
+
+[2025-04-04 12:28:30] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:28:30] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:28:30 ====
+
+[2025-04-04 12:28:30] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:28:30] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:28:31 ====
+
+[2025-04-04 12:28:31] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:28:31] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:28:31 ====
+
+[2025-04-04 12:28:31] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:28:31] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:28:31 ====
+
+[2025-04-04 12:28:31] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:28:31] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:28:31 ====
+
+[2025-04-04 12:28:31] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:28:31] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:28:31 ====
+
+[2025-04-04 12:28:31] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:28:31] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:33:03 ====
+
+[2025-04-04 12:33:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:33:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:33:07 ====
+
+[2025-04-04 12:33:07] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:33:07] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:33:07 ====
+
+[2025-04-04 12:33:07] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:33:07] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:33:07 ====
+
+[2025-04-04 12:33:07] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:33:07] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:33:07 ====
+
+[2025-04-04 12:33:07] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:33:07] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:33:07 ====
+
+[2025-04-04 12:33:07] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:33:07] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:33:07 ====
+
+[2025-04-04 12:33:07] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:33:07] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:33:07 ====
+
+[2025-04-04 12:33:07] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:33:07] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:33:07 ====
+
+[2025-04-04 12:33:07] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:33:07] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:33:07 ====
+
+[2025-04-04 12:33:07] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:33:07] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:33:07 ====
+
+[2025-04-04 12:33:07] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:33:07] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:33:07 ====
+
+[2025-04-04 12:33:07] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:33:07] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:33:08 ====
+
+[2025-04-04 12:33:08] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:33:08] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:38:49 ====
+
+[2025-04-04 12:38:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:38:49] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:38:53 ====
+
+[2025-04-04 12:38:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:38:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:38:53 ====
+
+[2025-04-04 12:38:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:38:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:38:53 ====
+
+[2025-04-04 12:38:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:38:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:38:53 ====
+
+[2025-04-04 12:38:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:38:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:38:53 ====
+
+[2025-04-04 12:38:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:38:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:38:53 ====
+
+[2025-04-04 12:38:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:38:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:38:53 ====
+
+[2025-04-04 12:38:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:38:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:38:53 ====
+
+[2025-04-04 12:38:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:38:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:38:53 ====
+
+[2025-04-04 12:38:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:38:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:38:53 ====
+
+[2025-04-04 12:38:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:38:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:38:53 ====
+
+[2025-04-04 12:38:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:38:53 ====
+[2025-04-04 12:38:53] Starting batch size search for unet_baseline_l1
+
+[2025-04-04 12:38:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:38:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:39:42 ====
+
+[2025-04-04 12:39:42] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:39:42] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:39:47 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:39:47 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:39:47 ====
+
+[2025-04-04 12:39:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:39:47 ====
+
+[2025-04-04 12:39:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:39:47 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:39:47 ====
+
+[2025-04-04 12:39:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:39:47 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:39:47 ====
+
+[2025-04-04 12:39:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 12:39:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 12:39:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:39:47 ====
+
+[2025-04-04 12:39:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:39:47] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:39:47 ====
+
+[2025-04-04 12:39:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:39:47 ====
+[2025-04-04 12:39:47] Starting batch size search for unet_baseline_l1
+
+[2025-04-04 12:39:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:39:47] Starting batch size search for unet_baseline_l1
+[2025-04-04 12:39:47] Starting batch size search for unet_baseline_l1
+
+[2025-04-04 12:39:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:39:47] Starting batch size search for unet_baseline_l1
+[2025-04-04 12:39:47] Starting batch size search for unet_baseline_l1
+
+[2025-04-04 12:39:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:39:47] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:39:47 ====
+[2025-04-04 12:39:47] Starting batch size search for unet_baseline_l1
+[2025-04-04 12:39:47] Starting batch size search for unet_baseline_l1
+
+[2025-04-04 12:39:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:39:47] Starting batch size search for unet_baseline_l1
+[2025-04-04 12:39:47] Starting batch size search for unet_baseline_l1
+[2025-04-04 12:39:47] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:40:44 ====
+
+[2025-04-04 12:40:44] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:40:44] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:40:49 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:40:49 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:40:49 ====
+
+[2025-04-04 12:40:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 12:40:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 12:40:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:40:49 ====
+[2025-04-04 12:40:49] Starting batch size search for unet_baseline_l1
+[2025-04-04 12:40:49] Starting batch size search for unet_baseline_l1
+[2025-04-04 12:40:49] Starting batch size search for unet_baseline_l1
+
+[2025-04-04 12:40:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:40:49 ====
+[2025-04-04 12:40:49] Starting batch size search for unet_baseline_l1
+
+[2025-04-04 12:40:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:40:49 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:40:49 ====
+[2025-04-04 12:40:49] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:40:49 ====
+
+[2025-04-04 12:40:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 12:40:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 12:40:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:40:49 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:40:49 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:40:49 ====
+[2025-04-04 12:40:49] Starting batch size search for unet_baseline_l1
+[2025-04-04 12:40:49] Starting batch size search for unet_baseline_l1
+[2025-04-04 12:40:49] Starting batch size search for unet_baseline_l1
+
+[2025-04-04 12:40:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 12:40:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 12:40:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:40:49] Starting batch size search for unet_baseline_l1
+[2025-04-04 12:40:49] Starting batch size search for unet_baseline_l1
+[2025-04-04 12:40:49] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:40:49 ====
+
+[2025-04-04 12:40:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:40:49] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:44:49 ====
+
+[2025-04-04 12:44:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:44:49] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:44:53 ====
+
+[2025-04-04 12:44:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:44:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:44:53 ====
+
+[2025-04-04 12:44:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:44:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:44:53 ====
+
+[2025-04-04 12:44:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:44:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:44:53 ====
+
+[2025-04-04 12:44:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:44:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:44:53 ====
+
+[2025-04-04 12:44:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:44:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:44:53 ====
+
+[2025-04-04 12:44:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:44:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:44:53 ====
+
+[2025-04-04 12:44:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:44:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:44:53 ====
+
+[2025-04-04 12:44:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:44:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:44:53 ====
+
+[2025-04-04 12:44:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:44:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:44:53 ====
+
+[2025-04-04 12:44:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:44:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:44:53 ====
+
+[2025-04-04 12:44:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:44:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:44:53 ====
+
+[2025-04-04 12:44:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:44:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:45:36 ====
+
+[2025-04-04 12:45:36] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:45:36] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:45:40 ====
+
+[2025-04-04 12:45:40] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:45:40] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:45:40 ====
+
+[2025-04-04 12:45:40] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:45:40] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:45:40 ====
+
+[2025-04-04 12:45:40] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:45:40] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:45:40 ====
+
+[2025-04-04 12:45:40] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:45:40] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:45:40 ====
+
+[2025-04-04 12:45:40] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:45:40] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:45:40 ====
+
+[2025-04-04 12:45:40] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:45:40] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:45:40 ====
+
+[2025-04-04 12:45:40] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:45:40] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:45:41 ====
+
+[2025-04-04 12:45:41] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:45:41] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:45:41 ====
+
+[2025-04-04 12:45:41] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:45:41] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:45:41 ====
+
+[2025-04-04 12:45:41] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:45:41] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:45:41 ====
+
+[2025-04-04 12:45:41] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:45:41] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:45:41 ====
+
+[2025-04-04 12:45:41] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:45:41] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:53:32 ====
+
+[2025-04-04 12:53:32] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:53:32] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:53:35 ====
+
+[2025-04-04 12:53:35] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:53:35] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:53:36 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:53:36 ====
+
+[2025-04-04 12:53:36] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 12:53:36] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:53:36] Starting batch size search for unet_baseline_l1
+[2025-04-04 12:53:36] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:53:36 ====
+
+[2025-04-04 12:53:36] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:53:36] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:53:36 ====
+
+[2025-04-04 12:53:36] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:53:36] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:53:36 ====
+
+[2025-04-04 12:53:36] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:53:36] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:53:36 ====
+
+[2025-04-04 12:53:36] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:53:36] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:53:36 ====
+
+[2025-04-04 12:53:36] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:53:36] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:53:36 ====
+
+[2025-04-04 12:53:36] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:53:36] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:53:36 ====
+
+[2025-04-04 12:53:36] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:53:36] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:53:36 ====
+
+[2025-04-04 12:53:36] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 12:53:36 ====
+[2025-04-04 12:53:36] Starting batch size search for unet_baseline_l1
+
+[2025-04-04 12:53:36] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 12:53:36] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:39:46 ====
+
+[2025-04-04 14:39:46] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:39:46] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:39:51 ====
+
+[2025-04-04 14:39:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:39:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:39:51 ====
+
+[2025-04-04 14:39:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:39:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:39:51 ====
+
+[2025-04-04 14:39:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:39:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:39:51 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:39:51 ====
+
+[2025-04-04 14:39:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 14:39:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:39:51] Starting batch size search for unet_baseline_l1
+[2025-04-04 14:39:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:39:51 ====
+
+[2025-04-04 14:39:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:39:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:39:51 ====
+
+[2025-04-04 14:39:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:39:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:39:51 ====
+
+[2025-04-04 14:39:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:39:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:39:51 ====
+
+[2025-04-04 14:39:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:39:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:39:51 ====
+
+[2025-04-04 14:39:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:39:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:39:51 ====
+
+[2025-04-04 14:39:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:39:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:39:51 ====
+
+[2025-04-04 14:39:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:39:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:43:36 ====
+
+[2025-04-04 14:43:36] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:43:36] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:43:39 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:43:39 ====
+
+[2025-04-04 14:43:39] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 14:43:39] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:43:39] Starting batch size search for unet_baseline_l1
+[2025-04-04 14:43:39] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:46:31 ====
+
+[2025-04-04 14:46:31] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:46:31] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:46:35 ====
+
+[2025-04-04 14:46:35] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:46:35] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:46:35 ====
+
+[2025-04-04 14:46:35] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:46:35] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:49:38 ====
+
+[2025-04-04 14:49:38] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:49:38] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:50:31 ====
+
+[2025-04-04 14:50:31] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:50:31] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:51:04 ====
+
+[2025-04-04 14:51:04] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:51:04] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:51:17 ====
+
+[2025-04-04 14:51:17] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:51:17] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:51:51 ====
+
+[2025-04-04 14:51:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:51:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:51:54 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:51:54 ====
+
+[2025-04-04 14:51:54] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 14:51:54] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:51:54] Starting batch size search for unet_baseline_l1
+[2025-04-04 14:51:54] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:59:39 ====
+
+[2025-04-04 14:59:39] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:59:39] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 14:59:52 ====
+
+[2025-04-04 14:59:52] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 14:59:52] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:00:15 ====
+
+[2025-04-04 15:00:15] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:00:15] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:00:30 ====
+
+[2025-04-04 15:00:30] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:00:30] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:11:19 ====
+
+[2025-04-04 15:11:19] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:11:19] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:11:23 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:11:23 ====
+
+[2025-04-04 15:11:23] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 15:11:23] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:11:23] Starting batch size search for unet_baseline_l1
+[2025-04-04 15:11:23] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:12:33 ====
+
+[2025-04-04 15:12:33] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:12:33] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:12:37 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:12:37 ====
+
+[2025-04-04 15:12:37] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 15:12:37] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:12:37] Starting batch size search for unet_baseline_l1
+[2025-04-04 15:12:37] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:14:22 ====
+
+[2025-04-04 15:14:22] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:14:22] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:14:26 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:14:26 ====
+
+[2025-04-04 15:14:26] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 15:14:26] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:14:26] Starting batch size search for unet_baseline_l1
+[2025-04-04 15:14:26] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:17:13 ====
+
+[2025-04-04 15:17:13] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:17:13] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:19:19 ====
+
+[2025-04-04 15:19:19] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:19:19] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:20:01 ====
+
+[2025-04-04 15:20:01] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:20:01] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:32:32 ====
+
+[2025-04-04 15:32:32] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:32:32] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:36:59 ====
+
+[2025-04-04 15:36:59] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:36:59] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:37:21 ====
+
+[2025-04-04 15:37:21] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:37:21] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:37:24 ====
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:37:24 ====
+
+[2025-04-04 15:37:24] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+
+[2025-04-04 15:37:24] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:37:24] Starting batch size search for unet_baseline_l1
+[2025-04-04 15:37:24] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:39:09 ====
+
+[2025-04-04 15:39:09] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:39:09] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:39:34 ====
+
+[2025-04-04 15:39:34] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:39:34] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:39:58 ====
+
+[2025-04-04 15:39:58] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:39:58] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:40:42 ====
+
+[2025-04-04 15:40:42] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:40:42] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-04 15:40:59] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:42:25 ====
+
+[2025-04-04 15:42:25] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:42:25] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-04 15:42:40] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:47:29 ====
+
+[2025-04-04 15:47:29] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:47:29] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-04 15:47:59] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 15:54:43 ====
+
+[2025-04-04 15:54:43] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 15:54:43] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-04 15:55:07] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: 0.000000)
+[2025-04-04 15:57:11] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 16:00:19 ====
+
+[2025-04-04 16:00:19] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 16:00:19] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-04 16:00:43] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 16:01:46 ====
+
+[2025-04-04 16:01:46] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 16:01:46] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-04 16:03:03] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-04 16:33:40 ====
+
+[2025-04-04 16:33:40] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-04 16:33:40] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 14:57:30 ====
+
+[2025-04-11 14:57:30] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 14:57:30] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 15:04:14 ====
+
+[2025-04-11 15:04:14] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 15:04:14] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 15:05:25 ====
+
+[2025-04-11 15:05:25] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 15:05:25] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 15:06:29 ====
+
+[2025-04-11 15:06:29] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 15:06:29] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 15:07:26 ====
+
+[2025-04-11 15:07:26] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 15:07:26] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 15:08:10 ====
+
+[2025-04-11 15:08:10] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 15:08:10] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 15:12:22 ====
+
+[2025-04-11 15:12:22] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 15:12:22] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 15:14:22 ====
+
+[2025-04-11 15:14:22] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 15:14:22] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:04:25 ====
+
+[2025-04-11 16:04:25] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:04:25] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:07:32 ====
+
+[2025-04-11 16:07:32] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:07:32] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:08:18 ====
+
+[2025-04-11 16:08:18] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:08:18] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:08:57 ====
+
+[2025-04-11 16:08:57] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:08:57] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:10:30 ====
+
+[2025-04-11 16:10:30] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:10:30] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:11:10 ====
+
+[2025-04-11 16:11:10] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:11:10] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:11:58 ====
+
+[2025-04-11 16:11:58] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:11:58] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:13:01 ====
+
+[2025-04-11 16:13:01] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:13:01] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:14:17 ====
+
+[2025-04-11 16:14:17] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:14:17] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 16:15:37] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:19:21 ====
+
+[2025-04-11 16:19:21] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:19:21] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:47:17 ====
+
+[2025-04-11 16:47:17] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:47:17] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:49:03 ====
+
+[2025-04-11 16:49:03] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:49:03] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:49:08 ====
+
+[2025-04-11 16:49:08] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:49:08] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:53:13 ====
+
+[2025-04-11 16:53:13] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:53:13] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:53:18 ====
+
+[2025-04-11 16:53:18] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:53:18] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 16:53:18] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:54:42 ====
+
+[2025-04-11 16:54:42] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:54:42] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:54:47 ====
+
+[2025-04-11 16:54:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:54:47] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 16:54:47] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 16:54:47] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:56:19 ====
+
+[2025-04-11 16:56:19] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:56:19] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:56:24 ====
+
+[2025-04-11 16:56:24] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:56:24] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 16:56:24] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 16:56:25] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:58:40 ====
+
+[2025-04-11 16:58:40] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:58:40] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 16:59:46 ====
+
+[2025-04-11 16:59:46] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 16:59:46] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:00:09] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:04:59 ====
+
+[2025-04-11 17:04:59] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:04:59] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:05:04 ====
+
+[2025-04-11 17:05:04] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:05:04] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:05:04] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:05:05] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:10:04 ====
+
+[2025-04-11 17:10:04] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:10:04] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:10:09 ====
+
+[2025-04-11 17:10:09] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:10:09] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:10:09] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:10:10] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:10:35 ====
+
+[2025-04-11 17:10:35] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:10:35] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:10:40 ====
+
+[2025-04-11 17:10:40] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:10:40] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:10:40] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:10:40] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:11:04 ====
+
+[2025-04-11 17:11:04] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:11:04] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:11:10 ====
+
+[2025-04-11 17:11:10] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:11:10] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:11:10] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:11:10] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:12:42 ====
+
+[2025-04-11 17:12:42] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:12:42] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:12:47 ====
+
+[2025-04-11 17:12:47] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:12:47] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:12:47] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:12:47] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:13:35 ====
+
+[2025-04-11 17:13:35] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:13:35] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:13:40 ====
+
+[2025-04-11 17:13:40] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:13:40] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:13:40] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:13:40] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:13:56 ====
+
+[2025-04-11 17:13:56] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:13:56] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:14:01 ====
+
+[2025-04-11 17:14:01] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:14:01] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:14:01] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:14:02] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:14:38 ====
+
+[2025-04-11 17:14:38] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:14:38] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:14:43 ====
+
+[2025-04-11 17:14:43] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:14:43] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:14:43] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:14:43] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:16:05 ====
+
+[2025-04-11 17:16:05] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:16:05] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:16:10 ====
+
+[2025-04-11 17:16:10] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:16:10] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:16:10] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:16:10] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:17:18 ====
+
+[2025-04-11 17:17:18] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:17:18] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:17:23 ====
+
+[2025-04-11 17:17:23] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:17:23] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:17:23] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:17:23] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:22:01 ====
+
+[2025-04-11 17:22:01] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:22:01] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:22:06 ====
+
+[2025-04-11 17:22:06] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:22:06] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:22:06] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:22:06] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:22:51 ====
+
+[2025-04-11 17:22:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:22:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:22:56 ====
+
+[2025-04-11 17:22:56] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:22:56] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:22:56] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:22:56] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:24:20 ====
+
+[2025-04-11 17:24:20] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:24:20] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:27:08 ====
+
+[2025-04-11 17:27:08] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:27:08] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:29:24 ====
+
+[2025-04-11 17:29:24] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:29:24] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:29:29 ====
+
+[2025-04-11 17:29:29] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:29:29] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:29:29] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:29:29] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:29:51 ====
+
+[2025-04-11 17:29:51] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:29:51] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:29:56 ====
+
+[2025-04-11 17:29:56] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:29:56] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:29:56] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:29:56] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:31:41 ====
+
+[2025-04-11 17:31:41] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:31:41] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:31:46 ====
+
+[2025-04-11 17:31:46] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:31:46] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:31:46] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 17:31:46] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:32:09 ====
+
+[2025-04-11 17:32:09] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:32:09] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:32:50 ====
+
+[2025-04-11 17:32:50] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:32:50] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 17:34:40 ====
+
+[2025-04-11 17:34:40] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 17:34:40] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 32
+[2025-04-11 17:35:09] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: 0.354854)
+[2025-04-11 17:47:28] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 32
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 18:41:25 ====
+
+[2025-04-11 18:41:25] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 18:41:25] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 18:42:43 ====
+
+[2025-04-11 18:42:43] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 18:42:43] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 18:57:17 ====
+
+[2025-04-11 18:57:17] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 18:57:17] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 18:58:19 ====
+
+[2025-04-11 18:58:19] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 18:58:19] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 18:58:24 ====
+
+[2025-04-11 18:58:24] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 18:58:24] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 18:59:10 ====
+
+[2025-04-11 18:59:10] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 18:59:10] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 18:59:15 ====
+
+[2025-04-11 18:59:15] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 18:59:15] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16 (based on speed)
+[2025-04-11 18:59:15] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 18:59:15] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 16
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 19:01:54 ====
+
+[2025-04-11 19:01:54] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 19:01:54] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 19:01:59 ====
+
+[2025-04-11 19:01:59] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 19:01:59] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16 (based on speed)
+[2025-04-11 19:01:59] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 19:01:59] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 16
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 21:10:16 ====
+
+[2025-04-11 21:10:16] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 21:10:16] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 21:10:21 ====
+
+[2025-04-11 21:10:21] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 21:10:21] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16 (based on speed)
+[2025-04-11 21:10:21] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 21:10:21] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 16
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 21:12:53 ====
+
+[2025-04-11 21:12:53] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 21:12:53] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 21:12:58 ====
+
+[2025-04-11 21:12:58] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 21:12:58] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16 (based on speed)
+[2025-04-11 21:12:58] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 21:12:58] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 16
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 21:14:11 ====
+
+[2025-04-11 21:14:11] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 21:14:11] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 21:14:16 ====
+
+[2025-04-11 21:14:16] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 21:14:16] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16 (based on speed)
+[2025-04-11 21:14:16] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-11 21:14:16] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 16
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 21:17:57 ====
+
+[2025-04-11 21:17:57] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 21:17:57] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 8 (based on speed)
+[2025-04-11 21:18:58] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: 0.384936)
+[2025-04-11 21:21:09] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 21:23:24 ====
+
+[2025-04-11 21:23:24] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 21:23:24] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-11 21:24:54 ====
+
+[2025-04-11 21:24:54] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 21:24:54] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 8 (based on speed)
+[2025-04-11 21:25:56] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: 0.385665)
+[2025-04-11 21:28:08] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-11 21:38:27] ERROR in experiment baseline: ReduceLROnPlateau conditioned on metric validation_loss which is not available. Available metrics are: ['lr-RMSprop', 'loss']. Condition can be set using `monitor` key in lr scheduler dict
+
+[2025-04-11 21:38:27] Starting experiment 2/5: roi_focus - U-Net with ROI focus
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: False
+[2025-04-11 21:38:27] Starting batch size search for unet_roi_focus_l1_roi
+  Optimal batch size for unet_roi_focus_l1_roi: 8 (based on speed)
+[2025-04-11 21:39:37] Starting learning rate search for unet_roi_focus_l1_roi
+  Best learning rate for unet_roi_focus_l1_roi: 0.0001 (loss: 0.400843)
+[2025-04-11 21:41:48] Optimized hyperparameters for unet_roi_focus_l1_roi:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-11 21:52:39] ERROR in experiment roi_focus: ReduceLROnPlateau conditioned on metric validation_loss which is not available. Available metrics are: ['lr-RMSprop', 'loss']. Condition can be set using `monitor` key in lr scheduler dict
+
+[2025-04-11 21:52:39] Starting experiment 3/5: cbam - U-Net with CBAM
+  attn_layer: True
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-11 21:52:39] Starting batch size search for unet_cbam_l1_attn
+  Optimal batch size for unet_cbam_l1_attn: 8 (based on speed)
+[2025-04-11 21:54:55] Starting learning rate search for unet_cbam_l1_attn
+  Best learning rate for unet_cbam_l1_attn: 0.0001 (loss: 0.391054)
+[2025-04-11 21:58:14] Optimized hyperparameters for unet_cbam_l1_attn:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-11 22:14:14] ERROR in experiment cbam: ReduceLROnPlateau conditioned on metric validation_loss which is not available. Available metrics are: ['lr-RMSprop', 'loss']. Condition can be set using `monitor` key in lr scheduler dict
+
+[2025-04-11 22:14:14] Starting experiment 4/5: attention_gates - U-Net with Attention Gates
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: True
+[2025-04-11 22:14:14] Starting batch size search for unet_attention_gates_l1_roi_agate
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-12 10:00:06 ====
+
+[2025-04-12 10:00:06] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-12 10:00:06] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-12 10:02:50 ====
+
+[2025-04-12 10:02:50] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-12 10:02:50] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-12 10:04:00 ====
+
+[2025-04-12 10:04:00] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-12 10:04:00] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 8 (based on speed)
+[2025-04-12 10:05:02] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: 0.382706)
+[2025-04-12 10:07:10] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-12 11:10:17] Completed experiment: baseline
+  Training time: 63.11 minutes
+  Best validation loss: 0.280804
+  Saved model to: logs/unet/unet_baseline_l1/checkpoints
+[2025-04-12 11:10:17] ERROR in experiment baseline: Support for `test_epoch_end` has been removed in v2.0.0. `UnetModule` implements this method. You can use the `on_test_epoch_end` hook instead. To access outputs, save them in-memory as instance attributes. You can find migration examples in https://github.com/Lightning-AI/lightning/pull/16520.
+
+[2025-04-12 11:10:17] Starting experiment 2/5: roi_focus - U-Net with ROI focus
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: False
+[2025-04-12 11:10:17] Starting batch size search for unet_roi_focus_l1_roi
+  Optimal batch size for unet_roi_focus_l1_roi: 8 (based on speed)
+[2025-04-12 11:11:25] Starting learning rate search for unet_roi_focus_l1_roi
+  Best learning rate for unet_roi_focus_l1_roi: 0.0001 (loss: 0.399416)
+[2025-04-12 11:13:38] Optimized hyperparameters for unet_roi_focus_l1_roi:
+  Batch size: 8
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-12 11:43:49 ====
+
+[2025-04-12 11:43:49] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-12 11:43:49] Optimized hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-12 11:43:49] ERROR in experiment baseline: cannot access local variable 'data_module' where it is not associated with a value
+
+[2025-04-12 11:43:49] Starting experiment 2/5: roi_focus - U-Net with ROI focus
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-12 11:43:49] Optimized hyperparameters for unet_roi_focus_l1_roi:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-12 11:43:49] ERROR in experiment roi_focus: cannot access local variable 'data_module' where it is not associated with a value
+
+[2025-04-12 11:43:49] Starting experiment 3/5: cbam - U-Net with CBAM
+  attn_layer: True
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-12 11:43:49] Optimized hyperparameters for unet_cbam_l1_attn:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-12 11:43:49] ERROR in experiment cbam: cannot access local variable 'data_module' where it is not associated with a value
+
+[2025-04-12 11:43:49] Starting experiment 4/5: attention_gates - U-Net with Attention Gates
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: True
+[2025-04-12 11:43:49] Starting batch size search for unet_attention_gates_l1_roi_agate
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-12 11:48:17 ====
+
+[2025-04-12 11:48:17] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-12 11:48:17] Final hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-12 11:50:11 ====
+
+[2025-04-12 11:50:11] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-12 11:50:11] Final hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-12 12:02:14] ERROR in experiment baseline: ReduceLROnPlateau conditioned on metric validation_loss which is not available. Available metrics are: ['lr-RMSprop', 'loss', 'val_loss', 'val_loss_image', 'val_loss_roi']. Condition can be set using `monitor` key in lr scheduler dict
+
+[2025-04-12 12:02:14] Starting experiment 2/5: roi_focus - U-Net with ROI focus
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-12 12:02:14] Final hyperparameters for unet_roi_focus_l1_roi:
+  Batch size: 8
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-12 12:08:08 ====
+
+[2025-04-12 12:08:08] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-12 12:08:08] Final hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-12 14:50:30] Completed experiment: baseline
+  Training time: 162.36 minutes
+  Best validation loss: 0.281008
+  Saved model to: logs/unet/unet_baseline_l1/checkpoints
+  Test results: []
+
+[2025-04-12 14:50:54] Starting experiment 2/5: roi_focus - U-Net with ROI focus
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-12 14:50:54] Final hyperparameters for unet_roi_focus_l1_roi:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-12 17:39:07] Completed experiment: roi_focus
+  Training time: 168.21 minutes
+  Best validation loss: 0.292613
+  Saved model to: logs/unet/unet_roi_focus_l1_roi/checkpoints
+  Test results: []
+
+[2025-04-12 17:39:32] Starting experiment 3/5: cbam - U-Net with CBAM
+  attn_layer: True
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-12 17:39:32] Final hyperparameters for unet_cbam_l1_attn:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-12 21:50:00] Completed experiment: cbam
+  Training time: 250.47 minutes
+  Best validation loss: 0.280336
+  Saved model to: logs/unet/unet_cbam_l1_attn/checkpoints
+  Test results: []
+
+[2025-04-12 21:50:25] Starting experiment 4/5: attention_gates - U-Net with Attention Gates
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: True
+[2025-04-12 21:50:25] Starting batch size search for unet_attention_gates_l1_roi_agate
+  Optimal batch size for unet_attention_gates_l1_roi_agate: 8 (based on speed)
+[2025-04-12 21:51:42] Starting learning rate search for unet_attention_gates_l1_roi_agate
+  Best learning rate for unet_attention_gates_l1_roi_agate: 0.0001 (loss: 0.406376)
+[2025-04-12 21:54:06] Final hyperparameters for unet_attention_gates_l1_roi_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 00:58:42] Completed experiment: attention_gates
+  Training time: 184.61 minutes
+  Best validation loss: 0.292316
+  Saved model to: logs/unet/unet_attention_gates_l1_roi_agate/checkpoints
+  Test results: []
+
+[2025-04-13 00:59:07] Starting experiment 5/5: full_attention - U-Net with CBAM and Attention Gates
+  attn_layer: True
+  metric: l1
+  use_roi: True
+  use_attention_gates: True
+[2025-04-13 00:59:07] Starting batch size search for unet_full_attention_l1_roi_attn_agate
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 12:34:11 ====
+
+[2025-04-13 12:34:11] Starting experiment 1/1: full_attention - U-Net with CBAM and Attention Gates
+  attn_layer: True
+  metric: l1
+  use_roi: True
+  use_attention_gates: True
+[2025-04-13 12:34:11] Starting batch size search for unet_full_attention_l1_roi_attn_agate
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 12:38:16 ====
+
+[2025-04-13 12:38:16] Starting experiment 1/1: full_attention - U-Net with CBAM and Attention Gates
+  attn_layer: True
+  metric: l1
+  use_roi: True
+  use_attention_gates: True
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 12:38:16] Final hyperparameters for unet_full_attention_l1_roi_attn_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 17:17:03] Completed experiment: full_attention
+  Training time: 278.78 minutes
+  Best validation loss: 0.292458
+  Saved model to: logs/unet/unet_full_attention_l1_roi_attn_agate/checkpoints
+  Test results: []
+
+[2025-04-13 17:17:29] All experiments completed!
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 18:58:42 ====
+
+[2025-04-13 18:58:42] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 18:58:42] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:00:30 ====
+
+[2025-04-13 19:00:30] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:00:30] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:01:38 ====
+
+[2025-04-13 19:01:38] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:01:38] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:02:42 ====
+
+[2025-04-13 19:02:42] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:02:42] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:09:17 ====
+
+[2025-04-13 19:09:17] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:09:17] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:14:15 ====
+
+[2025-04-13 19:14:15] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:14:15] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:21:28 ====
+
+[2025-04-13 19:21:28] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:21:28] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:21:50 ====
+
+[2025-04-13 19:21:50] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:21:50] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:29:57 ====
+
+[2025-04-13 19:29:57] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:29:57] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16 (based on speed)
+[2025-04-13 19:32:11] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:34:10 ====
+
+[2025-04-13 19:34:10] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:34:10] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:34:20 ====
+
+[2025-04-13 19:34:20] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:34:20] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16 (based on speed)
+[2025-04-13 19:34:20] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-13 19:34:21] Final hyperparameters for unet_baseline_l1:
+  Batch size: 16
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:38:05 ====
+
+[2025-04-13 19:38:05] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:38:05] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 8 (based on speed)
+[2025-04-13 19:39:04] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: 0.378962)
+[2025-04-13 19:41:16] Final hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:42:48 ====
+
+[2025-04-13 19:42:48] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 19:42:48] Final hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 19:43:21] Completed experiment: baseline
+  Training time: 0.55 minutes
+  Best validation loss: 0.553227
+  Saved model to: logs/unet/unet_baseline_l1/checkpoints
+  Test results: []
+
+[2025-04-13 19:43:40] Starting experiment 2/5: cbam - U-Net with CBAM
+  attn_layer: True
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 19:43:40] Final hyperparameters for unet_cbam_l1_attn:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 19:44:17] Completed experiment: cbam
+  Training time: 0.60 minutes
+  Best validation loss: 0.547734
+  Saved model to: logs/unet/unet_cbam_l1_attn/checkpoints
+  Test results: []
+
+[2025-04-13 19:44:36] Starting experiment 3/5: full_attention - U-Net with CBAM and Attention Gates
+  attn_layer: True
+  metric: l1
+  use_roi: True
+  use_attention_gates: True
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 19:44:36] Final hyperparameters for unet_full_attention_l1_roi_attn_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 19:45:12] Completed experiment: full_attention
+  Training time: 0.61 minutes
+  Best validation loss: 0.696534
+  Saved model to: logs/unet/unet_full_attention_l1_roi_attn_agate/checkpoints
+  Test results: []
+
+[2025-04-13 19:45:31] Starting experiment 4/5: roi_focus - U-Net with ROI focus
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 19:45:31] Final hyperparameters for unet_roi_focus_l1_roi:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 19:46:04] Completed experiment: roi_focus
+  Training time: 0.55 minutes
+  Best validation loss: 0.567035
+  Saved model to: logs/unet/unet_roi_focus_l1_roi/checkpoints
+  Test results: []
+
+[2025-04-13 19:46:23] Starting experiment 5/5: attention_gates - U-Net with Attention Gates
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: True
+[2025-04-13 19:46:23] Starting batch size search for unet_attention_gates_l1_roi_agate
+  Optimal batch size for unet_attention_gates_l1_roi_agate: 8 (based on speed)
+[2025-04-13 19:47:28] Starting learning rate search for unet_attention_gates_l1_roi_agate
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:47:46 ====
+
+[2025-04-13 19:47:46] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 19:47:46] Final hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 19:48:19] Completed experiment: baseline
+  Training time: 0.56 minutes
+  Best overall validation loss (callback monitor): 0.570668
+  Final Epoch Validation Image Loss: 0.570668
+  Final Epoch Validation ROI Loss: 0.594331
+  Saved model to: logs/unet/unet_baseline_l1/checkpoints
+  Test results: []
+
+[2025-04-13 19:48:38] Starting experiment 2/5: cbam - U-Net with CBAM
+  attn_layer: True
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 19:48:38] Final hyperparameters for unet_cbam_l1_attn:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 19:49:15] Completed experiment: cbam
+  Training time: 0.61 minutes
+  Best overall validation loss (callback monitor): 0.507161
+  Final Epoch Validation Image Loss: 0.507161
+  Final Epoch Validation ROI Loss: 0.649365
+  Saved model to: logs/unet/unet_cbam_l1_attn/checkpoints
+  Test results: []
+
+[2025-04-13 19:49:34] Starting experiment 3/5: full_attention - U-Net with CBAM and Attention Gates
+  attn_layer: True
+  metric: l1
+  use_roi: True
+  use_attention_gates: True
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 19:49:34] Final hyperparameters for unet_full_attention_l1_roi_attn_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:53:38 ====
+
+[2025-04-13 19:53:38] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:53:38] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 8 (based on speed)
+[2025-04-13 19:54:35] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: 0.380624)
+[2025-04-13 19:56:47] Final hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 21:40:46] Completed experiment: baseline
+  Training time: 103.98 minutes
+  Best overall validation loss (callback monitor): 0.273731
+  Final Epoch Validation Image Loss: 0.273731
+  Final Epoch Validation ROI Loss: 0.307942
+  Saved model to: logs/unet/unet_baseline_l1/checkpoints
+  Test results: []
+
+[2025-04-13 21:41:05] Starting experiment 2/5: cbam - U-Net with CBAM
+  attn_layer: True
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 21:41:05] Starting batch size search for unet_cbam_l1_attn
+  Optimal batch size for unet_cbam_l1_attn: 8 (based on speed)
+[2025-04-13 21:42:31] Starting learning rate search for unet_cbam_l1_attn
+  Best learning rate for unet_cbam_l1_attn: 0.0001 (loss: 0.380451)
+[2025-04-13 21:45:48] Final hyperparameters for unet_cbam_l1_attn:
+  Batch size: 8
+  Learning rate: 0.0001

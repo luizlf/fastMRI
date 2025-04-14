@@ -15,6 +15,151 @@ import torch
 import fastmri
 from src.mri_data import CombinedSliceDataset, SliceDataset, AnnotatedSliceDataset
 
+from typing import NamedTuple, List, Dict, Any, Tuple
+import logging
+
+
+# <<< Define NamedTuple for batch structure >>>
+class CustomBatch(NamedTuple):
+    image: torch.Tensor
+    target: Optional[torch.Tensor]
+    mean: torch.Tensor
+    std: torch.Tensor
+    fname: List[str]
+    slice_num: List[int]
+    max_value: torch.Tensor
+    annotations: List[List[Dict[str, Any]]]  # List of lists of annotation dicts
+    mask: Optional[torch.Tensor]  # Added optional mask field
+
+
+# <<< Define Custom Collate Function >>>
+def custom_collate_fn(batch: List[Any]) -> CustomBatch:
+    """Custom collate function to handle varying annotation list lengths and potentially missing targets/masks."""
+    (
+        images,
+        targets,
+        means,
+        stds,
+        fnames,
+        slice_nums,
+        max_values,
+        annotations_list,
+        masks,
+    ) = ([], [], [], [], [], [], [], [], [])
+
+    has_target = False
+    has_mask = False
+
+    # Check the structure of the first element to determine access method
+    if not batch:
+        raise ValueError("Batch cannot be empty")
+
+    # Assuming the dataset __getitem__ returns a tuple or dict-like object
+    # Structure after transform: (image, target, mean, std, fname, slice_num, max_value, annotations, mask)
+    # This needs to be consistent with the actual output of your Dataset's __getitem__ AFTER the transform
+
+    for sample in batch:
+        try:
+            # --- Access data assuming a specific tuple structure ---
+            # Adjust indices if your dataset/transform returns a different order or structure
+            img = sample[0]
+            tgt = (
+                sample[1] if len(sample) > 1 else None
+            )  # Handle cases where target might be missing
+            mean_val = sample[2]
+            std_val = sample[3]
+            fname_val = sample[4]
+            slice_val = sample[5]
+            max_val = sample[6]
+            annots = (
+                sample[7] if len(sample) > 7 else []
+            )  # Default to empty list if missing
+            mask_val = (
+                sample[8] if len(sample) > 8 else None
+            )  # Handle cases where mask might be missing
+            # --- End Access --- #
+
+            # Basic validation (keep for tensors)
+            if not isinstance(img, torch.Tensor):
+                raise TypeError(f"Expected image tensor, got {type(img)}")
+            # Remove float/int checks for mean/std/max - they are tensors
+            # if not isinstance(mean_val, (float, int)): raise TypeError(f"Expected mean float/int, got {type(mean_val)}")
+            # if not isinstance(std_val, (float, int)): raise TypeError(f"Expected std float/int, got {type(std_val)}")
+            # if not isinstance(max_val, (float, int)): raise TypeError(f"Expected max_value float/int, got {type(max_val)}")
+
+            # <<< Extract item() from tensors before appending >>>
+            images.append(img)
+            means.append(
+                mean_val.item() if isinstance(mean_val, torch.Tensor) else mean_val
+            )  # Get scalar
+            stds.append(
+                std_val.item() if isinstance(std_val, torch.Tensor) else std_val
+            )  # Get scalar
+            fnames.append(str(fname_val))  # Ensure string
+            slice_nums.append(int(slice_val))  # Ensure int
+            max_values.append(
+                max_val.item() if isinstance(max_val, torch.Tensor) else max_val
+            )  # Get scalar
+            # Ensure annotations is a list, default to empty list if None
+            annotations_list.append(annots if isinstance(annots, list) else [])
+
+            if tgt is not None:
+                if not isinstance(tgt, torch.Tensor):
+                    raise TypeError(f"Expected target tensor, got {type(tgt)}")
+                targets.append(tgt)
+                has_target = True
+
+            if mask_val is not None:
+                if not isinstance(mask_val, torch.Tensor):
+                    raise TypeError(f"Expected mask tensor, got {type(mask_val)}")
+                masks.append(mask_val)
+                has_mask = True
+
+        except (
+            IndexError,
+            TypeError,
+            AttributeError,
+        ) as e:  # Added AttributeError for .item()
+            logging.error(
+                f"Error processing sample in custom_collate_fn: {e}. Sample data structure might be unexpected."
+            )
+            # Log the sample structure for debugging
+            try:
+                logging.error(
+                    f"Problematic sample type: {type(sample)}, value: {sample}"
+                )
+            except Exception:
+                logging.error("Could not log problematic sample details.")
+            # Option: Skip sample or raise error
+            # continue
+            raise ValueError(
+                f"Error processing sample structure in custom collate: {e}"
+            )
+
+    # Stack tensors if list is not empty
+    images = torch.stack(images, 0) if images else torch.empty(0)
+    means = torch.tensor(means, dtype=torch.float32) if means else torch.empty(0)
+    stds = torch.tensor(stds, dtype=torch.float32) if stds else torch.empty(0)
+    max_values = (
+        torch.tensor(max_values, dtype=torch.float32) if max_values else torch.empty(0)
+    )
+
+    targets = torch.stack(targets, 0) if has_target and targets else None
+    masks = torch.stack(masks, 0) if has_mask and masks else None
+
+    # Return the custom batch structure
+    return CustomBatch(
+        image=images,
+        target=targets,
+        mean=means,
+        std=stds,
+        fname=fnames,
+        slice_num=slice_nums,
+        max_value=max_values,
+        annotations=annotations_list,  # Keep as list of lists
+        mask=masks,
+    )
+
 
 def worker_init_fn(worker_id):
     """Handle random seeding for all mask_func."""
@@ -248,6 +393,7 @@ class FastMriDataModule(pl.LightningDataModule):
                 use_dataset_cache=self.use_dataset_cache_file,
                 raw_sample_filter=raw_sample_filter,
             )
+            collate_to_use = custom_collate_fn
         else:
             if data_partition in ("test", "challenge") and self.test_path is not None:
                 data_path = self.test_path
@@ -275,6 +421,7 @@ class FastMriDataModule(pl.LightningDataModule):
                 multiple_annotation_policy="all",
                 only_annotated=self.only_annotated,
             )
+            collate_to_use = custom_collate_fn
 
         # ensure that entire volumes go to the same GPU in the ddp setting
         sampler = None
@@ -289,10 +436,14 @@ class FastMriDataModule(pl.LightningDataModule):
             dataset=dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            worker_init_fn=worker_init_fn,
             sampler=sampler,
             shuffle=is_train if sampler is None else False,
+            persistent_workers=True if self.num_workers >= 1 else False,
+            pin_memory=False,
+            collate_fn=collate_to_use,
         )
+        # iter(dataloader)
+        # print(next(iter(dataloader)))
 
         return dataloader
 
