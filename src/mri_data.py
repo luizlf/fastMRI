@@ -482,6 +482,17 @@ class AnnotatedSliceDataset(SliceDataset):
             raw_sample_filter,
         )
 
+        # --- Diagnostic Logging Start ---
+        num_raw_samples_before = len(self.raw_samples)
+        logging.info(
+            f"[AnnotatedSliceDataset] Initial raw samples from SliceDataset: {num_raw_samples_before}"
+        )
+        if num_raw_samples_before > 0:
+            logging.info(
+                f"[AnnotatedSliceDataset] Example raw sample filename stem: {self.raw_samples[0].fname.stem}"
+            )
+        # --- Diagnostic Logging End ---
+
         annotated_raw_samples: List[FastMRIRawDataSample] = []
 
         if subsplit not in ("knee", "brain"):
@@ -491,66 +502,160 @@ class AnnotatedSliceDataset(SliceDataset):
                 'multiple_annotation_policy should be "single", "random", or "all"'
             )
 
-        # download csv file from github using git hash to find certain version
-        annotation_name = f"{subsplit}{annotation_version}.csv"
-        annotation_path = Path(os.getcwd(), ".annotation_cache", annotation_name)
-        if not annotation_path.is_file():
-            annotation_path = self.download_csv(
-                annotation_version, subsplit, annotation_path
+        # --- Load Annotations --- #
+        try:
+            annotation_name = f"{subsplit}{annotation_version or ''}.csv"
+            annotation_path = Path(os.getcwd(), ".annotation_cache", annotation_name)
+            if not annotation_path.is_file():
+                logging.info(
+                    f"Annotation file not found at {annotation_path}, downloading..."
+                )
+                annotation_path = self.download_csv(
+                    annotation_version, subsplit, annotation_path
+                )
+            else:
+                logging.info(f"Using existing annotation file: {annotation_path}")
+            annotations_csv = pd.read_csv(annotation_path)
+        except Exception as e:
+            logging.error(
+                f"[AnnotatedSliceDataset] Failed to load or download annotations: {e}",
+                exc_info=True,
             )
-        annotations_csv = pd.read_csv(annotation_path)
+            # Set raw_samples to empty if annotations can't be loaded and only_annotated is True
+            if only_annotated:
+                self.raw_samples = []
+            # Otherwise, the original raw_samples will be kept (effectively ignoring only_annotated)
+            return  # Stop __init__ here
 
-        for raw_sample in self.raw_samples:
-            fname, slice_ind, metadata = raw_sample
-            metadata = deepcopy(metadata)
-            maxy = metadata["recon_size"][0]
+        # Get set of filenames with *valid* annotations from CSV
+        # Filter for slice-level annotations with actual coordinates
+        valid_annotations_df = annotations_csv[
+            (annotations_csv["study_level"] != "Yes")
+            & (annotations_csv["x"] != -1)
+            & (annotations_csv["y"] != -1)
+            & (annotations_csv["width"] != -1)
+            & (annotations_csv["height"] != -1)
+        ]
+        annotated_filenames_with_valid_roi = set(valid_annotations_df["file"].unique())
+        logging.info(
+            f"[AnnotatedSliceDataset] Found {len(annotated_filenames_with_valid_roi)} unique filenames with valid ROI annotations in CSV."
+        )
+        if annotated_filenames_with_valid_roi:
+            logging.info(
+                f"[AnnotatedSliceDataset] Example annotated filename stem from CSV: {next(iter(annotated_filenames_with_valid_roi))}"
+            )
+        # --- End Load Annotations --- #
 
-            # using filename and slice to find desired annotation
-            annotations_df = annotations_csv[
-                (annotations_csv["file"] == fname.stem)
-                & (annotations_csv["slice"] == slice_ind)
-            ]
+        # --- Filter Samples Based on only_annotated Flag --- #
+        if only_annotated:
+            original_raw_samples = self.raw_samples  # Keep original list for iteration
+            annotated_raw_samples = []  # Build the new list
+            logging.info(
+                f"[AnnotatedSliceDataset] Filtering for only_annotated samples..."
+            )
 
-            if len(annotations_df) >= 1 and multiple_annotation_policy == "all":
-                # multiple annotations
-                # extend raw samples to have tow copies of the same slice,
-                # one for each annotation
-                annotations = []
-                for ind in range(len(annotations_df)):
-                    row = annotations_df.iloc[ind]
-                    annotation = self.get_annotation(row, maxy, slice_ind, fname)
-                    annotations.append(annotation)
-                    # metadata["annotation"] = annotation
-                for annotation in annotations:
-                    metadata["annotations"] = [annotation]
-                    if annotation['x'] == -1 or annotation['y'] == -1:
-                        continue
-                    annotated_raw_samples.append(
-                        FastMRIRawDataSample(fname, slice_ind, metadata)
+            for raw_sample in original_raw_samples:
+                fname, slice_ind, metadata = raw_sample
+                fname_stem = fname.stem
+
+                # Check if this file has *any* valid ROI annotation in the CSV
+                if fname_stem in annotated_filenames_with_valid_roi:
+                    # Now, specifically check if *this slice* has an annotation
+                    slice_annotation_df = valid_annotations_df[
+                        (valid_annotations_df["file"] == fname_stem)
+                        & (valid_annotations_df["slice"] == slice_ind)
+                    ]
+
+                    if not slice_annotation_df.empty:
+                        # This specific slice has a valid ROI annotation, include it.
+                        # Add the specific annotation(s) to metadata for later use
+                        metadata_copy = deepcopy(metadata)
+                        slice_annotations = []
+                        maxy = metadata_copy["recon_size"][0]
+                        policy = multiple_annotation_policy
+                        if len(slice_annotation_df) > 1 and policy != "all":
+                            # Apply policy if multiple annotations exist for this slice
+                            if policy == "first":
+                                rows_to_process = slice_annotation_df.iloc[[0]]
+                            elif policy == "random":
+                                rows_to_process = slice_annotation_df.sample(1)
+                        else:
+                            rows_to_process = (
+                                slice_annotation_df  # Process all (usually 1)
+                            )
+
+                        for _, row in rows_to_process.iterrows():
+                            annotation = self.get_annotation(
+                                row, maxy, slice_ind, fname
+                            )
+                            slice_annotations.append(annotation)
+
+                        metadata_copy["annotations"] = slice_annotations
+                        annotated_raw_samples.append(
+                            FastMRIRawDataSample(fname, slice_ind, metadata_copy)
+                        )
+                        # logging.debug(f"Keeping annotated sample: {fname_stem} slice {slice_ind}")
+                    # else: # Optional: Log slices from annotated files that don't have slice-level annotations
+                    #    logging.debug(f"Skipping sample from annotated file with no annotation for this slice: {fname_stem} slice {slice_ind}")
+                # else: # Optional: Log files skipped because they aren't in the annotation CSV at all
+                #    logging.debug(f"Skipping sample from file not in annotation list: {fname_stem} slice {slice_ind}")
+
+            # Replace the original raw_samples with the filtered list
+            self.raw_samples = annotated_raw_samples
+            logging.info(
+                f"[AnnotatedSliceDataset] Filtered samples (only_annotated=True): {len(self.raw_samples)}"
+            )
+
+        else:  # Process all samples if only_annotated is False
+            logging.info(
+                f"[AnnotatedSliceDataset] Processing all {num_raw_samples_before} samples (only_annotated=False). Adding annotation metadata..."
+            )
+            all_processed_samples = []
+            for raw_sample in self.raw_samples:
+                fname, slice_ind, metadata = raw_sample
+                metadata_copy = deepcopy(metadata)
+                maxy = metadata_copy["recon_size"][0]
+
+                # Find annotations for this slice, if any
+                slice_annotation_df = annotations_csv[
+                    (annotations_csv["file"] == fname.stem)
+                    & (annotations_csv["slice"] == slice_ind)
+                ]
+
+                slice_annotations = []
+                policy = multiple_annotation_policy
+                if slice_annotation_df.empty:
+                    # Add placeholder if no annotation found
+                    slice_annotations.append(
+                        self.get_annotation(None, maxy, slice_ind, fname)
+                    )
+                else:
+                    # Apply policy if multiple annotations exist
+                    if len(slice_annotation_df) > 1 and policy != "all":
+                        if policy == "first":
+                            rows_to_process = slice_annotation_df.iloc[[0]]
+                        elif policy == "random":
+                            rows_to_process = slice_annotation_df.sample(1)
+                    else:
+                        rows_to_process = slice_annotation_df
+
+                    for _, row in rows_to_process.iterrows():
+                        annotation = self.get_annotation(row, maxy, slice_ind, fname)
+                        slice_annotations.append(annotation)
+
+                metadata_copy["annotations"] = slice_annotations
+                all_processed_samples.append(
+                    FastMRIRawDataSample(fname, slice_ind, metadata_copy)
                 )
-            elif not only_annotated:
-                # only add one annotation
-                if len(annotations_df) == 0:
-                    # no annotation found
-                    rows = None
-                elif len(annotations_df) == 1 or multiple_annotation_policy == "first":
-                    # only use the first annotation
-                    rows = annotations_df.iloc[0]
-                elif multiple_annotation_policy == "random":
-                    # use an annotation at random
-                    random_number = torch.randint(len(annotations_df) - 1, (1,))
-                    rows = annotations_df.iloc[random_number]
+            self.raw_samples = all_processed_samples
+            logging.info(
+                f"[AnnotatedSliceDataset] Finished adding annotation metadata (only_annotated=False): {len(self.raw_samples)}"
+            )
+        # --- End Filter Samples --- #
 
-                # metadata["annotation"] = self.get_annotation(rows, maxy)
-                annotation = self.get_annotation(rows, maxy, slice_ind, fname)
-                metadata["annotations"] = [annotation]
-                annotated_raw_samples.append(
-                    FastMRIRawDataSample(fname, slice_ind, metadata)
-                )
-
-        self.raw_samples = annotated_raw_samples
-
-    def get_annotation(self, row: Optional[pd.Series], maxy: int, slice_ind: int, fname: str):
+    def get_annotation(
+        self, row: Optional[pd.Series], maxy: int, slice_ind: int, fname: str
+    ):
         if row is None:
             annotation = {
                 "fname": str(fname),

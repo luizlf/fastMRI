@@ -12,6 +12,7 @@ import pathlib
 import pytorch_lightning as pl
 import os
 import time
+import math
 import matplotlib.pyplot as plt
 from datetime import datetime
 from torch.utils.data import DataLoader
@@ -60,7 +61,8 @@ def find_optimal_batch_size(
     baseline_batch_size,
 ):
     """
-    Find the optimal batch size without using separate processes
+    Find the optimal batch size without using separate processes,
+    processing roughly the same number of images for each test.
     """
     with open(log_file, "a") as f:
         f.write(
@@ -69,14 +71,12 @@ def find_optimal_batch_size(
 
     print(f"\nFinding optimal batch size for {experiment_name}...")
 
+    # <<< Define target number of images for fair comparison >>>
+    target_images_per_test = 192  # Adjust as needed
+
     # Start with a range of batch sizes that make sense for M4 Max
-    # Try fewer batch sizes to reduce search time
-    batch_sizes = [
-        8,
-        16,
-        24,
-    ]  # Consider adjusting this range based on typical GPU memory
-    batch_sizes = [bs for bs in batch_sizes if bs <= max_batch_size]
+    batch_sizes = [2, 4, 8, 16]
+    batch_sizes = sorted([bs for bs in batch_sizes if bs <= max_batch_size])
 
     # Dictionary to store timing results per batch size
     timing_results = {}
@@ -98,6 +98,15 @@ def find_optimal_batch_size(
     for batch_size in batch_sizes:
         try:
             print(f"  Testing batch size {batch_size}...")
+
+            # <<< Calculate number of batches dynamically >>>
+            num_batches_train = math.ceil(target_images_per_test / batch_size)
+            num_batches_val = math.ceil(
+                num_batches_train / 4
+            )  # Roughly 1/4th val batches
+            print(
+                f"    Target images: {target_images_per_test}, Train batches: {num_batches_train}, Val batches: {num_batches_val}"
+            )
 
             # Create a small model for testing
             test_model = UnetModule(
@@ -126,14 +135,17 @@ def find_optimal_batch_size(
                 enable_checkpointing=False,
                 enable_model_summary=False,
                 enable_progress_bar=True,
-                precision=precision,  # Use precision based on backend
-                limit_train_batches=20,  # Increase batches slightly for better timing
-                limit_val_batches=5,  # Keep validation minimal
+                precision=precision,
+                # <<< Use dynamic batch limits >>>
+                limit_train_batches=num_batches_train,
+                limit_val_batches=num_batches_val,
                 strategy="auto",
                 use_distributed_sampler=False,
             )
 
-            # Prepare data to see if it fits in memory and time the fit process
+            # Prepare data and time the fit process
+            # <<< Remove nested try/except for KeyboardInterrupt >>>
+            # try:
             if __name__ == "__main__":
                 print(f"  Starting batch size test for batch size {batch_size}")
                 start_time = time.time()
@@ -152,19 +164,24 @@ def find_optimal_batch_size(
                     f"  Batch size {batch_size} completed successfully in {duration:.2f} seconds, validation loss = {val_loss:.6f}"
                 )
 
-                # Clean up to free memory
-                del trainer, test_model
-                torch.cuda.empty_cache() if torch.cuda.is_available() else None
+            # except KeyboardInterrupt:
+            #     print(f"\n  >>> User interrupted batch size test at batch size {batch_size}. <<<\n")
+            #     # <<< Remove explicit stop >>>
+            #     # trainer.should_stop = True
+            #     # Break the loop testing batch sizes
+            #     break
+            # <<< End nested try/except >>>
 
+            # Clean up to free memory (moved back inside main try block logic)
+            del trainer, test_model
+            torch.cuda.empty_cache() if torch.cuda.is_available() else None
+
+        # Outer exception handling for other errors (like OOM)
         except Exception as e:
             print(f"  Batch size {batch_size} failed with error: {type(e).__name__}")
             print(f"  Error details: {str(e)}")
-            # line where error occurred
-            print(f"  Error occurred at line {e.__traceback__.tb_lineno}")
-            # full traceback
-            print(f"  Full traceback: {str(e.__traceback__)}")
-            # break code execution
-            raise e
+            # ... (traceback printing) ...
+            # Break loop on other errors too
             break
 
     # Find the batch size with the fastest execution time
@@ -338,12 +355,14 @@ def run_experiments():
         "unet_roi_focus_l1_roi": {"batch_size": 8, "lr": 0.0001},
         "unet_cbam_l1_attn": {"batch_size": 8, "lr": 0.0001},
         "unet_full_attention_l1_roi_attn_agate": {"batch_size": 8, "lr": 0.0001},
+        "unet_attention_gates_l1_roi_agate": {"batch_size": 8, "lr": 0.0001},
         # Add entries for other experiments as they are successfully run
         # "unet_attention_gates_l1_roi_agate": { ... },
         # "unet_full_attention_l1_roi_attn_agate": { ... },
     }
 
     # Ask user whether to use stored params or rerun search
+    # <<< Default back to 'y' for full run >>>
     use_stored_params_input = (
         input("Use stored optimal batch size and learning rate? (y/n, default: y): ")
         .lower()
@@ -354,17 +373,22 @@ def run_experiments():
     )
 
     if USE_STORED_PARAMS:
-        print("\n>>> Attempting to use stored hyperparameters. <<<")
+        print(
+            "\n>>> Attempting to use stored hyperparameters. <<<"
+            + " If not found, search will run."
+        )  # Added clarification
     else:
-        print("\n>>> Rerunning hyperparameter search for all selected experiments. <<<")
+        print(
+            "\n>>> Rerunning hyperparameter search for all selected experiments. <<<"
+            + " (Set default input to 'y' to skip)"
+        )
 
     # Common parameters for all experiments
     path_config = pathlib.Path("fastmri_dirs.yaml")
-    max_epochs = 15  # Set this to your desired number of epochs
-    baseline_batch_size = 16  # Start with a higher baseline for M4 Max
-    num_workers = (
-        0  # Set to 1 to minimize multiprocessing issues but still have some parallelism
-    )
+    # <<< Increase max_epochs for full run >>>
+    max_epochs = 30  # Set this to your desired number of epochs
+    baseline_batch_size = 8  # Keep lower baseline from testing
+    num_workers = 0  # Keep num_workers=0 for stability based on previous tests
     challenge = "singlecoil"
     num_gpus = 1
     backend = "mps"  # Metal Performance Shaders for Apple Silicon
@@ -457,19 +481,31 @@ def run_experiments():
     test_transform = T.UnetDataTransform(challenge)
 
     # Run each experiment in sequence
-    # Filter experiments to run only the desired one(s)
+    # <<< Include all experiments for full run >>>
     target_experiment_names = [
+        "baseline",
+        "cbam",
         "full_attention",
+        "roi_focus",
+        "attention_gates",
+        # "full_attention",
     ]  # Add other names if needed, e.g., "full_attention"
+
+    # <<< Keep ordered execution >>>
+    experiments_dict = {exp["name"]: exp for exp in experiments}
     experiments_to_run = [
-        exp for exp in experiments if exp["name"] in target_experiment_names
+        experiments_dict[name]
+        for name in target_experiment_names
+        if name in experiments_dict
     ]
 
     if not experiments_to_run:
         print(f"ERROR: No experiments found with names: {target_experiment_names}")
         return
 
-    print(f"\n>>> Running only specified experiments: {target_experiment_names} <<<")
+    print(
+        f"\n>>> Running specified experiments in order: {target_experiment_names} <<<\n"
+    )
 
     for exp_idx, experiment in enumerate(experiments_to_run):
         # Log experiment start
@@ -531,7 +567,7 @@ def run_experiments():
             drop_prob=0.0,
             lr=0.001,  # Default, will be updated after search
             lr_factor=0.1,  # Default ReduceLROnPlateau factor
-            lr_patience=3,  # Default ReduceLROnPlateau patience
+            lr_patience=2,  # Default ReduceLROnPlateau patience
             weight_decay=0.0,
             max_epochs=max_epochs,
             metric=metric,
@@ -664,9 +700,10 @@ def run_experiments():
         ]
 
         # Create trainer with performance optimizations
+        # <<< Remove batch limits for full run >>>
         trainer = pl.Trainer(
             devices=configs["num_gpus"],
-            max_epochs=configs["max_epochs"],
+            max_epochs=configs["max_epochs"],  # Use updated max_epochs
             default_root_dir=configs["default_root_dir"],
             accelerator=configs["backend"],
             callbacks=callbacks,
@@ -675,21 +712,29 @@ def run_experiments():
             check_val_every_n_epoch=1,  # Run validation every epoch
             gradient_clip_val=1.0,  # Add gradient clipping for stability
             deterministic=False,  # Disable deterministic mode for speed
+            # limit_train_batches=10, # REMOVED
+            # limit_val_batches=5    # REMOVED
         )
 
         # Train model
         try:
             start_time = time.time()
-            print(f"  Starting training for {version_name}...")  # Added print
-            trainer.fit(
-                model, datamodule=data_module
-            )  # data_module should now be defined
+            print(f"  Starting full training for {version_name}...")  # Updated print
+            trainer.fit(model, datamodule=data_module)
             end_time = time.time()
 
             # Log experiment completion
             train_time_mins = (end_time - start_time) / 60
-            best_val_loss = trainer.callback_metrics.get(
+            # <<< Get metrics from trainer state >>>
+            final_metrics = trainer.callback_metrics
+            best_val_loss = final_metrics.get(
                 "val_loss", torch.tensor(float("inf"))
+            ).item()
+            last_val_image_loss = final_metrics.get(
+                "val_loss_image", torch.tensor(float("nan"))
+            ).item()
+            last_val_roi_loss = final_metrics.get(
+                "val_loss_roi", torch.tensor(float("nan"))
             ).item()
 
             with open(log_file, "a") as f:
@@ -697,12 +742,24 @@ def run_experiments():
                     f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Completed experiment: {experiment['name']}\n"
                 )
                 f.write(f"  Training time: {train_time_mins:.2f} minutes\n")
-                f.write(f"  Best validation loss: {best_val_loss:.6f}\n")
+                f.write(
+                    f"  Best overall validation loss (callback monitor): {best_val_loss:.6f}\n"
+                )
+                # <<< Log final epoch losses >>>
+                f.write(
+                    f"  Final Epoch Validation Image Loss: {last_val_image_loss:.6f}\n"
+                )
+                f.write(f"  Final Epoch Validation ROI Loss: {last_val_roi_loss:.6f}\n")
                 f.write(f"  Saved model to: {exp_dir}/checkpoints\n")
 
             print(f"Completed experiment: {experiment['name']}")
             print(f"  Training time: {train_time_mins:.2f} minutes")
-            print(f"  Best validation loss: {best_val_loss:.6f}")
+            print(
+                f"  Best overall validation loss (callback monitor): {best_val_loss:.6f}"
+            )
+            # <<< Print final epoch losses >>>
+            print(f"  Final Epoch Validation Image Loss: {last_val_image_loss:.6f}")
+            print(f"  Final Epoch Validation ROI Loss: {last_val_roi_loss:.6f}")
             print(f"  Saved model to: {exp_dir}/checkpoints")
 
             # Optional: Run a test step with the best model

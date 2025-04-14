@@ -14,6 +14,15 @@ import torch
 from torch.nn import functional as F
 from torch import nn
 
+# Attempt to import PIL for image labeling
+try:
+    from PIL import Image, ImageDraw, ImageFont
+
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+    # No logging here, will warn inside the function if needed
+
 # from fastmri.models import Unet
 from src.unet.unet import Unet
 
@@ -73,6 +82,60 @@ class SSIM(nn.Module):
         """
 
         return S.mean()
+
+
+# Helper function for labeling images
+def add_label_to_tensor(image_tensor, label):
+    """Adds a text label to the bottom-right corner of an image tensor."""
+    if not PIL_AVAILABLE:
+        # Log warning only when actually called without PIL
+        logging.warning(
+            "PIL (Pillow) not found. Cannot add text labels to images. Install with: pip install Pillow"
+        )
+        return image_tensor
+
+    # Input assumed to be [C, H, W] where C=1
+    if image_tensor.ndim != 3 or image_tensor.shape[0] != 1:
+        logging.warning(
+            f"Labeling expects tensor shape [1, H, W], got {image_tensor.shape}"
+        )
+        return image_tensor
+
+    img_tensor_squeezed = image_tensor.squeeze(0)
+
+    try:
+        img_np = (img_tensor_squeezed.cpu().numpy() * 255).astype(np.uint8)
+        pil_image = Image.fromarray(img_np, mode="L")
+        draw = ImageDraw.Draw(pil_image)
+
+        try:
+            font = ImageFont.load_default()
+        except IOError:
+            font = ImageFont.load_default()
+
+        try:
+            bbox = draw.textbbox((0, 0), label, font=font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+        except AttributeError:
+            text_width, text_height = draw.textsize(label, font=font)
+
+        img_width, img_height = pil_image.size
+        padding = 3
+        position = (
+            img_width - text_width - padding,
+            img_height - text_height - padding,
+        )
+
+        draw.text(position, label, fill=255, font=font)
+
+        labeled_np = np.array(pil_image).astype(np.float32) / 255.0
+        labeled_tensor = torch.from_numpy(labeled_np).unsqueeze(0)
+        return labeled_tensor
+
+    except Exception as e:
+        logging.warning(f"Failed to add label '{label}' to image: {e}")
+        return image_tensor  # Return original tensor on error
 
 
 class UnetModule(MriModule):
@@ -161,74 +224,169 @@ class UnetModule(MriModule):
         return self.unet(image.unsqueeze(1)).squeeze(1)
 
     def create_mask(self, annotations, shape):
-        annot_exists = True
-        # Get the current device from the model
-        current_device = next(self.parameters()).device
-        mask = torch.zeros(shape, device=current_device)
-        # rint(shape)
-        for annot in annotations:
-            if annot["x"].type() == torch.float:
-                for k, v in annot.items():
-                    annot[k] = [v]
-            for i in range(len(annot["x"])):
-                annotation = {k: v[i] for k, v in annot.items()}
-                if annotation["x"].item() == -1 and annotation["y"].item() == -1:
-                    pass
-                    # mask = torch.ones(shape, device=device)
-                else:
-                    # mask = torch.ones(shape, device=device)
-                    x, y, w, h = (
-                        annotation["x"],
-                        annotation["y"],
-                        annotation["width"],
-                        annotation["height"],
-                    )
-                    if x >= 0 and y >= 0 and w > 0 and h > 0:
-                        # mask[..., y : y + h, x : x + w] += self.roi_weight
-                        center_x, center_y = x + w / 2, y + h / 2
-                        # mask[..., y : y + h, x : x + w] = 1
-                        width = min(75, w * 2.5)
-                        height = min(75, h * 2.5)
-                        min_x, max_x = max(0, center_x - width), min(
-                            center_x + width, 320
+        """Creates a batch of binary masks from annotations.
+
+        Args:
+            annotations: The annotation data structure from the collate function.
+                       Expected structure with default collate: List[List[Dict]].
+            shape: The shape of the target tensor (e.g., model output) [B, H, W].
+
+        Returns:
+            A tuple containing:
+              - mask (torch.Tensor): A binary mask tensor of shape [B, H, W].
+              - annot_exists (bool): Whether any valid annotation existed in the batch.
+        """
+        B, H, W = shape
+        mask = torch.zeros(shape, dtype=torch.bool, device=self.device)
+        batch_annot_exists = False  # Track if any annotation exists in the batch
+
+        # Check if annotations is a list (basic check)
+        if not isinstance(annotations, list):
+            logging.warning(
+                f"Annotations structure unexpected (not a list), cannot create mask. Type: {type(annotations)}"
+            )
+            return mask, False
+
+        # Iterate through the batch using enumerate to get batch index
+        for batch_idx, annot_list in enumerate(annotations):
+            # Check if batch_idx is within the mask batch dimension
+            if batch_idx >= B:
+                logging.warning(
+                    f"Annotation list length ({len(annotations)}) exceeds mask batch size ({B}). Skipping extra annotations."
+                )
+                break
+
+            # Expect annot_list to be a list containing one dictionary
+            if isinstance(annot_list, list) and len(annot_list) > 0:
+                annot = annot_list[0]
+                if isinstance(annot, dict):
+                    # Check for valid annotation keys and coordinates
+                    if (
+                        all(k in annot for k in ("x", "y", "width", "height"))
+                        and annot.get("x", -1) != -1
+                    ):
+                        x, y, w, h = (
+                            int(annot["x"]),
+                            int(annot["y"]),
+                            int(annot["width"]),
+                            int(annot["height"]),
                         )
-                        min_y, max_y = max(0, center_y - height), min(
-                            center_y + height, 320
-                        )
-                        mask[i, int(min_y) : int(max_y), int(min_x) : int(max_x)] = 1
-        if torch.all(mask == 0):
-            annot_exists = False
-        #     mask = torch.ones(shape, device=device)
-        return mask, annot_exists
+
+                        # Check for valid dimensions
+                        if w > 0 and h > 0:
+                            # Use exact annotation coordinates, clamped to image dimensions
+                            y1 = max(0, y)
+                            y2 = min(y + h, H)  # Use dynamic shape H
+                            x1 = max(0, x)
+                            x2 = min(x + w, W)  # Use dynamic shape W
+
+                            if y2 > y1 and x2 > x1:  # Ensure valid slice after clamping
+                                mask[batch_idx, y1:y2, x1:x2] = True
+                                batch_annot_exists = (
+                                    True  # Mark that at least one valid annot was found
+                                )
+                        # else: logging.debug(f"Annotation with non-positive w/h skipped: {annot}")
+                    # else: logging.debug(f"Placeholder or invalid annotation dict skipped: {annot}")
+                # else: logging.debug(f"Item inside annotation list is not a dict: {annot}")
+            # else: logging.debug(f"Annotation list for sample {batch_idx} is not a list or is empty: {annot_list}")
+
+        return (
+            mask.to(self.device),
+            batch_annot_exists,
+        )  # Ensure mask is on correct device
 
     def training_step(self, batch, batch_idx):
         output = self(batch.image)
 
-        # create ROI mask
-        if self.use_roi:
-            mask, annot_exists = self.create_mask(batch.annotations, output.shape)
+        # Use the corrected create_mask function
+        # Pass the device from the output tensor
+        mask, annot_exists = self.create_mask(batch.annotations, output.shape)
+        mask = mask.to(output.device)  # Ensure mask is on same device as output/target
+
+        # <<< Log mask sum and existence flag >>>
+        log_to_logger = self.trainer is not None and self.trainer.logger is not None
+        self.log(
+            "train_annot_exists",
+            float(annot_exists),
+            on_step=True,
+            on_epoch=False,
+            prog_bar=False,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
+        self.log(
+            "train_mask_sum",
+            mask.sum().float(),
+            on_step=True,
+            on_epoch=False,
+            prog_bar=False,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
+
         if self.metric == "l1":
             loss_image = F.l1_loss(output, batch.target)
+            # Log the full image loss
+            self.log(
+                "train_loss_image",
+                loss_image.detach(),
+                on_step=True,
+                on_epoch=False,
+                prog_bar=False,
+                logger=log_to_logger,
+                batch_size=batch.image.size(0),
+            )
+
             if self.use_roi and annot_exists and mask.sum() > 0:
-                factor = mask.numel() / mask.sum()
-                loss_mask = F.l1_loss(output * mask, batch.target * mask) * factor
-                loss = (loss_image + loss_mask) / 2
-            else:
-                loss = loss_image
-        elif self.metric == "ssim":
-            if self.use_roi and annot_exists:
-                loss = 1 - self.ssim(
-                    output,
-                    batch.target,
-                    batch.max_value,
-                    mask=mask,
-                    use_roi=self.use_roi,
+                # Ensure mask is boolean for safe multiplication/indexing
+                mask_float = mask.float()
+                factor = mask_float.numel() / mask_float.sum()  # factor per batch
+                # Calculate ROI loss using the generated mask
+                loss_mask_roi = (
+                    F.l1_loss(output * mask_float, batch.target * mask_float) * factor
+                )
+                # Combine losses
+                loss = (loss_image * 0.5) + (
+                    loss_mask_roi * 0.5
+                )  # Example: 50/50 weighting
+                # Log the ROI-specific loss
+                self.log(
+                    "train_loss_roi",
+                    loss_mask_roi.detach(),
+                    on_step=True,
+                    on_epoch=False,
+                    prog_bar=False,
+                    logger=log_to_logger,
+                    batch_size=batch.image.size(0),
                 )
             else:
-                loss = 1 - self.ssim(output, batch.target, batch.max_value)
-        # print(f"Training Loss: {loss}")
-        # raise ValueError(f"Training Loss: {loss}")
-        self.log("loss", loss.detach(), batch_size=batch.image.size(0))
+                loss = loss_image
+                # Log ROI loss as 0 or NaN if not used/no annotation
+                self.log(
+                    "train_loss_roi",
+                    0.0,
+                    on_step=True,
+                    on_epoch=False,
+                    prog_bar=False,
+                    logger=log_to_logger,
+                    batch_size=batch.image.size(0),
+                )
+
+        elif self.metric == "ssim":
+            # ... (SSIM logic would also need adjustment if ROI is used)
+            # For now, assume L1 is the focus for ROI
+            loss = 1 - self.ssim(output, batch.target, batch.max_value)
+
+        # Log the final combined loss (or just image loss)
+        self.log(
+            "loss",
+            loss.detach(),
+            on_step=True,
+            on_epoch=True,
+            prog_bar=True,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -236,7 +394,9 @@ class UnetModule(MriModule):
         mean = batch.mean.unsqueeze(1).unsqueeze(2)
         std = batch.std.unsqueeze(1).unsqueeze(2)
 
+        # Recreate mask for validation consistency and visualization
         mask, annot_exists = self.create_mask(batch.annotations, output.shape)
+        mask = mask.to(output.device)
 
         # Calculate factor safely
         if annot_exists and mask.sum() > 0:
@@ -261,6 +421,8 @@ class UnetModule(MriModule):
         else:
             val_loss = val_loss_image
 
+        # <<< Define log_to_logger >>>
+        log_to_logger = self.trainer is not None and self.trainer.logger is not None
         self.log(
             "val_loss",
             val_loss.detach(),
@@ -268,6 +430,7 @@ class UnetModule(MriModule):
             prog_bar=True,
             sync_dist=True,
             batch_size=batch.image.size(0),
+            logger=log_to_logger,
         )
         # Log individual components for epoch-level averaging
         self.log(
@@ -277,6 +440,7 @@ class UnetModule(MriModule):
             prog_bar=False,
             sync_dist=True,
             batch_size=batch.image.size(0),
+            logger=log_to_logger,
         )
         self.log(
             "val_loss_roi",
@@ -285,17 +449,18 @@ class UnetModule(MriModule):
             prog_bar=False,
             sync_dist=True,
             batch_size=batch.image.size(0),
+            logger=log_to_logger,
         )
 
-        # --- Log images for the first few validation batches of each epoch ---
-        num_batches_to_log = 3  # Log images for the first 3 batches
+        # --- Log images including the mask ---
+        num_batches_to_log = 1
         if (
             batch_idx < num_batches_to_log
             and self.logger is not None
             and hasattr(self.logger, "experiment")
         ):
             try:
-                # No need for torchvision.utils import here anymore
+                import torchvision
 
                 # Detach, move to CPU, denormalize
                 output_viz = (output * std + mean).cpu().detach()
@@ -320,33 +485,151 @@ class UnetModule(MriModule):
                 # Calculate difference
                 diff_viz = torch.abs(output_viz - target_viz)
 
-                # --- Log each image individually ---
-                batch_size = output_viz.shape[0]
-                for i in range(batch_size):
-                    # Get filename and slice number for tagging
-                    try:
-                        fname = Path(
-                            batch.fname[i]
-                        ).stem  # Get filename without extension
-                        slice_num = int(batch.slice_num[i].item())
-                        tag_prefix = f"Validation_Epoch_{self.current_epoch}/Batch_{batch_idx}/{fname}_Slice_{slice_num}"
-                    except Exception:
-                        # Fallback tag if fname/slice access fails for some reason
-                        tag_prefix = f"Validation_Epoch_{self.current_epoch}/Batch_{batch_idx}_Image_{i}"
+                # --- Log a 1x5 labeled grid per image in the batch ---
+                actual_batch_size = output_viz.shape[0]
+                annotations_available = hasattr(batch, "annotations")
+                annotations_len = len(batch.annotations) if annotations_available else 0
 
-                    self.logger.experiment.add_image(
-                        f"{tag_prefix}/Output", output_viz[i], self.current_epoch
+                # Check for annotation consistency
+                if not annotations_available:
+                    logging.debug(
+                        f"Batch object missing 'annotations' attribute in training validation step for epoch {self.current_epoch}. Skipping ROI drawing."
                     )
-                    self.logger.experiment.add_image(
-                        f"{tag_prefix}/Target", target_viz[i], self.current_epoch
+                    process_annotations = False
+                elif actual_batch_size != annotations_len:
+                    logging.debug(
+                        f"Batch size mismatch in training validation step for epoch {self.current_epoch}: images {actual_batch_size}, annotations {annotations_len}. Skipping ROI drawing."
                     )
-                    self.logger.experiment.add_image(
-                        f"{tag_prefix}/Difference", diff_viz[i], self.current_epoch
-                    )
+                    process_annotations = False
+                else:
+                    process_annotations = True
+
+                for i in range(actual_batch_size):
+                    try:
+                        # Get individual images [1, H, W]
+                        target_img_tensor = target_viz[i]
+                        output_img_tensor = output_viz[i]
+                        error_img_tensor = diff_viz[i]
+
+                        # <<< Direct access to fname and slice_num >>>
+                        fname_str = batch.fname[i]  # Already a string
+                        slice_num_int = batch.slice_num[i]  # Already an int
+                        base_tag = f"{Path(fname_str).stem}_Slice_{slice_num_int}"
+
+                        # --- Get the generated mask for this sample --- #
+                        mask_slice_tensor = mask[i].float().unsqueeze(0)
+                        if mask_slice_tensor.ndim == 2:
+                            mask_slice_tensor = mask_slice_tensor.unsqueeze(0)
+                        elif (
+                            mask_slice_tensor.ndim == 3
+                            and mask_slice_tensor.shape[0] != 1
+                        ):
+                            mask_slice_tensor = mask_slice_tensor[0].unsqueeze(0)
+
+                        # --- Create ROI Border Image --- #
+                        roi_overlay_tensor = target_img_tensor.clone()
+                        if process_annotations:
+                            try:
+                                annotation_list_for_sample = batch.annotations[i]
+                                if (
+                                    isinstance(annotation_list_for_sample, list)
+                                    and len(annotation_list_for_sample) > 0
+                                ):
+                                    annot = annotation_list_for_sample[0]
+                                    if (
+                                        isinstance(annot, dict)
+                                        and all(
+                                            k in annot
+                                            for k in ("x", "y", "width", "height")
+                                        )
+                                        and annot.get("x", -1) != -1
+                                    ):
+                                        x, y, w, h = (
+                                            int(annot["x"]),
+                                            int(annot["y"]),
+                                            int(annot["width"]),
+                                            int(annot["height"]),
+                                        )
+                                        if w > 0 and h > 0 and PIL_AVAILABLE:
+                                            img_np_roi = (
+                                                roi_overlay_tensor.squeeze(0)
+                                                .cpu()
+                                                .numpy()
+                                                * 255
+                                            ).astype(np.uint8)
+                                            pil_image_roi = Image.fromarray(
+                                                img_np_roi, mode="L"
+                                            )
+                                            draw_roi = ImageDraw.Draw(pil_image_roi)
+                                            x1, y1 = x, y
+                                            x2, y2 = min(
+                                                x + w, pil_image_roi.width - 1
+                                            ), min(y + h, pil_image_roi.height - 1)
+                                            draw_roi.rectangle(
+                                                (x1, y1, x2, y2), outline=255, width=1
+                                            )
+                                            labeled_np_roi = (
+                                                np.array(pil_image_roi).astype(
+                                                    np.float32
+                                                )
+                                                / 255.0
+                                            )
+                                            roi_overlay_tensor = torch.from_numpy(
+                                                labeled_np_roi
+                                            ).unsqueeze(0)
+                                        elif not PIL_AVAILABLE:
+                                            logging.warning(
+                                                f"PIL not available, cannot draw ROI border for {base_tag}"
+                                            )
+                            except Exception as annot_e:
+                                logging.warning(
+                                    f"Could not process annotations/draw ROI border for {base_tag} in training validation: {annot_e}"
+                                )
+                        roi_overlay_tensor = torch.clamp(roi_overlay_tensor, 0.0, 1.0)
+                        # ----------------------------- #
+
+                        # --- Add Labels & Create Grid (Update to 5 images) --- #
+                        labeled_target = add_label_to_tensor(
+                            target_img_tensor, "Target"
+                        )
+                        labeled_recon = add_label_to_tensor(
+                            output_img_tensor, "Reconstruction"
+                        )
+                        labeled_error = add_label_to_tensor(error_img_tensor, "Error")
+                        labeled_roi = add_label_to_tensor(
+                            roi_overlay_tensor, "ROI Border"
+                        )
+                        # <<< Label the mask itself >>>
+                        labeled_mask = add_label_to_tensor(mask_slice_tensor, "Mask")
+
+                        # <<< Update grid to 1x5 >>>
+                        images_to_grid = [
+                            labeled_target,
+                            labeled_recon,
+                            labeled_error,
+                            labeled_roi,
+                            labeled_mask,
+                        ]
+                        # Use nrow=5 for a single row
+                        grid = torchvision.utils.make_grid(
+                            images_to_grid, nrow=5, padding=5, pad_value=0.5
+                        )
+                        # ----------------------------- #
+
+                        # --- Log the Grid --- #
+                        self.logger.experiment.add_image(
+                            f"{base_tag}/ComparisonGrid", grid, self.current_epoch
+                        )
+
+                    except Exception as e:
+                        logging.warning(
+                            f"Could not create/log validation grid for image {i} in batch {batch_idx}, epoch {self.current_epoch}: {e}"
+                        )
 
             except ImportError:
-                # This should not happen now as we removed the torchvision dependency here
-                pass
+                logging.warning(
+                    "torchvision not found, cannot log image grids. Skipping image logging."
+                )
             except Exception as e:
                 logging.warning(
                     f"Could not log validation images for batch {batch_idx} in epoch {self.current_epoch}: {e}"
@@ -362,8 +645,9 @@ class UnetModule(MriModule):
         ssim_vals = {}
 
         for i in range(output_np.shape[0]):  # Iterate through batch
+            # <<< Direct access to fname and slice_num >>>
             fname = batch.fname[i]
-            slice_num = int(batch.slice_num[i].item())
+            slice_num = batch.slice_num[i]
             max_val = max_value_np[i]
             target_slice = target_np[i]
             output_slice = output_np[i]
@@ -459,20 +743,30 @@ class UnetModule(MriModule):
         std = batch.std.unsqueeze(1).unsqueeze(2)
 
         # Create output dictionary
-        step_output = {
-            "fname": batch.fname,
-            "slice": batch.slice_num,
-            "output": (output * std + mean).cpu().numpy(),
-        }
+        # <<< Direct access to fname and slice_num >>>
+        # Assuming test_step_outputs expects dicts per sample
+        # We need to iterate through the batch here
+        actual_batch_size = output.shape[0]
+        for i in range(actual_batch_size):
+            step_output = {
+                "fname": batch.fname[i],
+                "slice": batch.slice_num[i],
+                "output": (output[i] * std[i] + mean[i])
+                .cpu()
+                .numpy(),  # Index output/std/mean
+            }
 
-        # Append to the instance list (inherited from MriModule)
-        if hasattr(self, "test_step_outputs"):
-            self.test_step_outputs.append(step_output)
-        else:
-            # Fallback or warning if the attribute wasn't initialized (should not happen with correct MriModule init)
-            print("Warning: self.test_step_outputs not found in UnetModule instance.")
+            # Append to the instance list (inherited from MriModule)
+            if hasattr(self, "test_step_outputs"):
+                self.test_step_outputs.append(step_output)
+            else:
+                # Fallback or warning if the attribute wasn't initialized (should not happen with correct MriModule init)
+                print(
+                    "Warning: self.test_step_outputs not found in UnetModule instance."
+                )
 
-        # return step_output # No longer need to return
+        # test_step typically doesn't return anything, results are collected in self.test_step_outputs
+        # return # No return needed
 
     def configure_optimizers(self):
         optim = torch.optim.RMSprop(

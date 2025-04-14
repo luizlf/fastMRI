@@ -3764,3 +3764,299 @@ Check the documentation of torch.load to learn more about types accepted by defa
 [2025-04-13 12:38:16] Final hyperparameters for unet_full_attention_l1_roi_attn_agate:
   Batch size: 8
   Learning rate: 0.0001
+[2025-04-13 17:17:03] Completed experiment: full_attention
+  Training time: 278.78 minutes
+  Best validation loss: 0.292458
+  Saved model to: logs/unet/unet_full_attention_l1_roi_attn_agate/checkpoints
+  Test results: []
+
+[2025-04-13 17:17:29] All experiments completed!
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 18:58:42 ====
+
+[2025-04-13 18:58:42] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 18:58:42] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:00:30 ====
+
+[2025-04-13 19:00:30] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:00:30] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:01:38 ====
+
+[2025-04-13 19:01:38] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:01:38] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:02:42 ====
+
+[2025-04-13 19:02:42] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:02:42] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:09:17 ====
+
+[2025-04-13 19:09:17] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:09:17] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:14:15 ====
+
+[2025-04-13 19:14:15] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:14:15] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:21:28 ====
+
+[2025-04-13 19:21:28] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:21:28] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:21:50 ====
+
+[2025-04-13 19:21:50] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:21:50] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:29:57 ====
+
+[2025-04-13 19:29:57] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:29:57] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16 (based on speed)
+[2025-04-13 19:32:11] Starting learning rate search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:34:10 ====
+
+[2025-04-13 19:34:10] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:34:10] Starting batch size search for unet_baseline_l1
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:34:20 ====
+
+[2025-04-13 19:34:20] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:34:20] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 16 (based on speed)
+[2025-04-13 19:34:20] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: inf)
+[2025-04-13 19:34:21] Final hyperparameters for unet_baseline_l1:
+  Batch size: 16
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:38:05 ====
+
+[2025-04-13 19:38:05] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:38:05] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 8 (based on speed)
+[2025-04-13 19:39:04] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: 0.378962)
+[2025-04-13 19:41:16] Final hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:42:48 ====
+
+[2025-04-13 19:42:48] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 19:42:48] Final hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 19:43:21] Completed experiment: baseline
+  Training time: 0.55 minutes
+  Best validation loss: 0.553227
+  Saved model to: logs/unet/unet_baseline_l1/checkpoints
+  Test results: []
+
+[2025-04-13 19:43:40] Starting experiment 2/5: cbam - U-Net with CBAM
+  attn_layer: True
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 19:43:40] Final hyperparameters for unet_cbam_l1_attn:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 19:44:17] Completed experiment: cbam
+  Training time: 0.60 minutes
+  Best validation loss: 0.547734
+  Saved model to: logs/unet/unet_cbam_l1_attn/checkpoints
+  Test results: []
+
+[2025-04-13 19:44:36] Starting experiment 3/5: full_attention - U-Net with CBAM and Attention Gates
+  attn_layer: True
+  metric: l1
+  use_roi: True
+  use_attention_gates: True
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 19:44:36] Final hyperparameters for unet_full_attention_l1_roi_attn_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 19:45:12] Completed experiment: full_attention
+  Training time: 0.61 minutes
+  Best validation loss: 0.696534
+  Saved model to: logs/unet/unet_full_attention_l1_roi_attn_agate/checkpoints
+  Test results: []
+
+[2025-04-13 19:45:31] Starting experiment 4/5: roi_focus - U-Net with ROI focus
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 19:45:31] Final hyperparameters for unet_roi_focus_l1_roi:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 19:46:04] Completed experiment: roi_focus
+  Training time: 0.55 minutes
+  Best validation loss: 0.567035
+  Saved model to: logs/unet/unet_roi_focus_l1_roi/checkpoints
+  Test results: []
+
+[2025-04-13 19:46:23] Starting experiment 5/5: attention_gates - U-Net with Attention Gates
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: True
+[2025-04-13 19:46:23] Starting batch size search for unet_attention_gates_l1_roi_agate
+  Optimal batch size for unet_attention_gates_l1_roi_agate: 8 (based on speed)
+[2025-04-13 19:47:28] Starting learning rate search for unet_attention_gates_l1_roi_agate
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:47:46 ====
+
+[2025-04-13 19:47:46] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 19:47:46] Final hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 19:48:19] Completed experiment: baseline
+  Training time: 0.56 minutes
+  Best overall validation loss (callback monitor): 0.570668
+  Final Epoch Validation Image Loss: 0.570668
+  Final Epoch Validation ROI Loss: 0.594331
+  Saved model to: logs/unet/unet_baseline_l1/checkpoints
+  Test results: []
+
+[2025-04-13 19:48:38] Starting experiment 2/5: cbam - U-Net with CBAM
+  attn_layer: True
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 19:48:38] Final hyperparameters for unet_cbam_l1_attn:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 19:49:15] Completed experiment: cbam
+  Training time: 0.61 minutes
+  Best overall validation loss (callback monitor): 0.507161
+  Final Epoch Validation Image Loss: 0.507161
+  Final Epoch Validation ROI Loss: 0.649365
+  Saved model to: logs/unet/unet_cbam_l1_attn/checkpoints
+  Test results: []
+
+[2025-04-13 19:49:34] Starting experiment 3/5: full_attention - U-Net with CBAM and Attention Gates
+  attn_layer: True
+  metric: l1
+  use_roi: True
+  use_attention_gates: True
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 19:49:34] Final hyperparameters for unet_full_attention_l1_roi_attn_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 19:53:38 ====
+
+[2025-04-13 19:53:38] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 19:53:38] Starting batch size search for unet_baseline_l1
+  Optimal batch size for unet_baseline_l1: 8 (based on speed)
+[2025-04-13 19:54:35] Starting learning rate search for unet_baseline_l1
+  Best learning rate for unet_baseline_l1: 0.0001 (loss: 0.380624)
+[2025-04-13 19:56:47] Final hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-13 21:40:46] Completed experiment: baseline
+  Training time: 103.98 minutes
+  Best overall validation loss (callback monitor): 0.273731
+  Final Epoch Validation Image Loss: 0.273731
+  Final Epoch Validation ROI Loss: 0.307942
+  Saved model to: logs/unet/unet_baseline_l1/checkpoints
+  Test results: []
+
+[2025-04-13 21:41:05] Starting experiment 2/5: cbam - U-Net with CBAM
+  attn_layer: True
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+[2025-04-13 21:41:05] Starting batch size search for unet_cbam_l1_attn
+  Optimal batch size for unet_cbam_l1_attn: 8 (based on speed)
+[2025-04-13 21:42:31] Starting learning rate search for unet_cbam_l1_attn
+  Best learning rate for unet_cbam_l1_attn: 0.0001 (loss: 0.380451)
+[2025-04-13 21:45:48] Final hyperparameters for unet_cbam_l1_attn:
+  Batch size: 8
+  Learning rate: 0.0001

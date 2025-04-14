@@ -27,3 +27,11 @@ logs/*
 submission.zip
 old_lightning_logs
 *.ckpt
+
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.ico
