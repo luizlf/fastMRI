@@ -356,6 +356,20 @@ def run_experiments():
         "unet_cbam_l1_attn": {"batch_size": 8, "lr": 0.0001},
         "unet_full_attention_l1_roi_attn_agate": {"batch_size": 8, "lr": 0.0001},
         "unet_attention_gates_l1_roi_agate": {"batch_size": 8, "lr": 0.0001},
+        "unet_full_attention_no_roi_l1_attn_agate": {"batch_size": 8, "lr": 0.0001},
+        "unet_attention_gates_no_roi_l1_agate": {"batch_size": 8, "lr": 0.0001},
+        "unet_baseline_l1_ssim": {"batch_size": 8, "lr": 0.0001},
+        "unet_full_attention_l1_ssim_roi_attn_agate": {"batch_size": 8, "lr": 0.0001},
+        "unet_attention_gates_l1_ssim_roi_agate": {"batch_size": 8, "lr": 0.0001},
+        "unet_full_attention_l1_ssim_l1_ssim_attn_agate": {
+            "batch_size": 8,
+            "lr": 0.0001,
+        },
+        "unet_attention_gates_no_roi_l1_ssim_agate": {"batch_size": 8, "lr": 0.0001},
+        "unet_full_attention_l1_ssim_roi_l1_ssim_roi_attn_agate": {
+            "batch_size": 8,
+            "lr": 0.0001,
+        },
         # Add entries for other experiments as they are successfully run
         # "unet_attention_gates_l1_roi_agate": { ... },
         # "unet_full_attention_l1_roi_attn_agate": { ... },
@@ -406,7 +420,7 @@ def run_experiments():
     experiments = [
         {
             "name": "baseline",
-            "description": "Baseline U-Net",
+            "description": "Baseline U-Net, No ROI, No Attention Gates",
             "params": {
                 "attn_layer": False,
                 "metric": "l1",
@@ -415,8 +429,8 @@ def run_experiments():
             },
         },
         {
-            "name": "roi_focus",
-            "description": "U-Net with ROI focus",
+            "name": "baseline_roi",
+            "description": "Baseline U-Net with ROI focus",
             "params": {
                 "attn_layer": False,
                 "metric": "l1",
@@ -435,8 +449,18 @@ def run_experiments():
             },
         },
         {
-            "name": "attention_gates",
-            "description": "U-Net with Attention Gates",
+            "name": "cbam_roi",
+            "description": "U-Net with CBAM and ROI",
+            "params": {
+                "attn_layer": True,
+                "metric": "l1",
+                "use_roi": True,
+                "use_attention_gates": False,
+            },
+        },
+        {
+            "name": "attention_gates_roi",
+            "description": "U-Net with Attention Gates and ROI",
             "params": {
                 "attn_layer": False,
                 "metric": "l1",
@@ -445,13 +469,94 @@ def run_experiments():
             },
         },
         {
-            "name": "full_attention",
-            "description": "U-Net with CBAM and Attention Gates",
+            "name": "full_attention_roi",
+            "description": "U-Net with CBAM and Attention Gates and ROI",
             "params": {
                 "attn_layer": True,
                 "metric": "l1",
                 "use_roi": True,
                 "use_attention_gates": True,
+            },
+        },
+        # <<< Add new configurations without ROI >>>
+        {
+            "name": "attention_gates",
+            "description": "U-Net with Attention Gates (No ROI Loss)",
+            "params": {
+                "attn_layer": False,
+                "metric": "l1",
+                "use_roi": False,  # Explicitly False
+                "use_attention_gates": True,
+            },
+        },
+        {
+            "name": "full_attention",
+            "description": "U-Net with CBAM and Attention Gates (No ROI Loss)",
+            "params": {
+                "attn_layer": True,
+                "metric": "l1",
+                "use_roi": False,  # Explicitly False
+                "use_attention_gates": True,
+            },
+        },
+        {
+            "name": "baseline_l1_ssim",
+            "description": "Baseline U-Net (L1+SSIM Loss), No ROI",
+            "params": {
+                "attn_layer": False,
+                "metric": "l1_ssim",
+                "use_roi": False,
+                "use_attention_gates": False,
+            },
+        },
+        {
+            "name": "baseline_l1_ssim_roi",
+            "description": "Baseline U-Net (L1+SSIM Loss), with ROI",
+            "params": {
+                "attn_layer": False,
+                "metric": "l1_ssim",
+                "use_roi": True,
+                "use_attention_gates": False,
+            },
+        },
+        {
+            "name": "full_attention_l1_ssim",
+            "description": "U-Net with CBAM & Attn Gates (L1+SSIM Loss, No ROI)",
+            "params": {
+                "attn_layer": True,
+                "metric": "l1_ssim",
+                "use_roi": False,
+                "use_attention_gates": True,
+            },
+        },
+        {
+            "name": "full_attention_l1_ssim_roi",
+            "description": "U-Net with CBAM & Attn Gates (L1+SSIM Loss, with ROI)",
+            "params": {
+                "attn_layer": True,
+                "metric": "l1_ssim",
+                "use_roi": True,
+                "use_attention_gates": True,
+            },
+        },
+        {
+            "name": "cbam_l1_ssim",
+            "description": "U-Net with CBAM and L1+SSIM Loss",
+            "params": {
+                "attn_layer": True,
+                "metric": "l1_ssim",
+                "use_roi": False,
+                "use_attention_gates": False,
+            },
+        },
+        {
+            "name": "cbam_l1_ssim_roi",
+            "description": "U-Net with CBAM and L1+SSIM Loss and ROI",
+            "params": {
+                "attn_layer": True,
+                "metric": "l1_ssim",
+                "use_roi": True,
+                "use_attention_gates": False,
             },
         },
     ]
@@ -483,11 +588,22 @@ def run_experiments():
     # Run each experiment in sequence
     # <<< Include all experiments for full run >>>
     target_experiment_names = [
-        "baseline",
-        "cbam",
-        "full_attention",
-        "roi_focus",
-        "attention_gates",
+        # "attention_gates_no_roi",
+        # "full_attention_no_roi",
+        # "baseline_l1_ssim",
+        # "cbam_l1_ssim",
+        "attention_gates_l1_ssim",
+        "full_attention_l1_ssim",
+        "baseline_l1_ssim_roi",
+        "cbam_l1_ssim_roi",
+        "attention_gates_l1_ssim_roi",
+        "full_attention_l1_ssim_roi",
+        # "full_attention_l1_ssim_roi",
+        # "baseline",
+        # "cbam",
+        # "full_attention",
+        # "roi_focus",
+        # "attention_gates",
         # "full_attention",
     ]  # Add other names if needed, e.g., "full_attention"
 
@@ -568,10 +684,11 @@ def run_experiments():
             lr=0.001,  # Default, will be updated after search
             lr_factor=0.1,  # Default ReduceLROnPlateau factor
             lr_patience=2,  # Default ReduceLROnPlateau patience
-            weight_decay=0.0,
+            weight_decay=0.01,
             max_epochs=max_epochs,
             metric=metric,
             roi_weight=0.5,
+            l1_ssim_alpha=0.7,
             attn_layer=attn_layer,
             use_roi=use_roi,
             use_attention_gates=use_attention_gates,
@@ -680,6 +797,7 @@ def run_experiments():
             attn_layer=configs["attn_layer"],
             use_roi=configs["use_roi"],
             use_attention_gates=configs["use_attention_gates"],
+            l1_ssim_alpha=configs["l1_ssim_alpha"],
         )
 
         # Set up callbacks

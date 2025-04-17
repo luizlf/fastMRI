@@ -164,6 +164,7 @@ class UnetModule(MriModule):
         attn_layer=False,
         use_roi=False,
         use_attention_gates=False,
+        l1_ssim_alpha=0.85,
         **kwargs,
     ):
         """
@@ -186,6 +187,7 @@ class UnetModule(MriModule):
             weight_decay (float, optional): Parameter for penalizing weights
                 norm. Defaults to 0.0.
             roi_weight (float, optional): Weight for the region of interest (0.1 means 10% higher weight to the annotated ROI).
+            l1_ssim_alpha (float, optional): Weight for L1 loss in combined L1+SSIM loss. Defaults to 0.85.
         """
         super().__init__(**kwargs)
         self.save_hyperparameters()
@@ -204,6 +206,7 @@ class UnetModule(MriModule):
         self.attn_layer = attn_layer
         self.use_roi = use_roi
         self.use_attention_gates = use_attention_gates
+        self.l1_ssim_alpha = l1_ssim_alpha
         # Use parent class's device handling
 
         self.unet = Unet(
@@ -217,8 +220,7 @@ class UnetModule(MriModule):
             use_attention_gates=self.use_attention_gates,
         )
 
-        if self.metric == "ssim":
-            self.ssim = SSIM()
+        self.ssim = SSIM()
 
     def forward(self, image):
         return self.unet(image.unsqueeze(1)).squeeze(1)
@@ -297,14 +299,79 @@ class UnetModule(MriModule):
 
     def training_step(self, batch, batch_idx):
         output = self(batch.image)
+        target = batch.target
 
-        # Use the corrected create_mask function
-        # Pass the device from the output tensor
         mask, annot_exists = self.create_mask(batch.annotations, output.shape)
-        mask = mask.to(output.device)  # Ensure mask is on same device as output/target
-
-        # <<< Log mask sum and existence flag >>>
+        mask = mask.to(output.device)
         log_to_logger = self.trainer is not None and self.trainer.logger is not None
+
+        # --- Calculate L1 Components --- #
+        loss_image_l1 = F.l1_loss(output, target)
+        loss_mask_roi_l1 = torch.tensor(0.0, device=output.device)
+        final_l1_component = loss_image_l1
+
+        if self.use_roi and annot_exists and mask.sum() > 0:
+            mask_float = mask.float()
+            loss_mask_roi_l1 = F.l1_loss(output[mask], target[mask])
+            final_l1_component = (loss_image_l1 * 0.5) + (loss_mask_roi_l1 * 0.5)
+
+        # --- Calculate SSIM Component (always on full image) --- #
+        output_ssim = output.unsqueeze(1)
+        target_ssim = target.unsqueeze(1)
+        max_value_ssim = batch.max_value.view(-1)
+        loss_image_ssim = 1.0 - self.ssim(output_ssim, target_ssim, max_value_ssim)
+
+        # --- Combine Losses --- #
+        loss = (self.l1_ssim_alpha * final_l1_component) + (
+            (1 - self.l1_ssim_alpha) * loss_image_ssim
+        )
+
+        # --- Logging --- #
+        self.log(
+            "train_loss",
+            loss.detach(),
+            on_step=True,
+            on_epoch=True,
+            prog_bar=True,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
+        self.log(
+            "train_loss_l1",
+            final_l1_component.detach(),
+            on_step=True,
+            on_epoch=False,
+            prog_bar=False,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
+        self.log(
+            "train_loss_ssim",
+            loss_image_ssim.detach(),
+            on_step=True,
+            on_epoch=False,
+            prog_bar=False,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
+        self.log(
+            "train_loss_image_l1",
+            loss_image_l1.detach(),
+            on_step=True,
+            on_epoch=False,
+            prog_bar=False,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
+        self.log(
+            "train_loss_roi_l1",
+            loss_mask_roi_l1.detach(),
+            on_step=True,
+            on_epoch=False,
+            prog_bar=False,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
         self.log(
             "train_annot_exists",
             float(annot_exists),
@@ -324,135 +391,187 @@ class UnetModule(MriModule):
             batch_size=batch.image.size(0),
         )
 
-        if self.metric == "l1":
-            loss_image = F.l1_loss(output, batch.target)
-            # Log the full image loss
-            self.log(
-                "train_loss_image",
-                loss_image.detach(),
-                on_step=True,
-                on_epoch=False,
-                prog_bar=False,
-                logger=log_to_logger,
-                batch_size=batch.image.size(0),
-            )
-
-            if self.use_roi and annot_exists and mask.sum() > 0:
-                # Ensure mask is boolean for safe multiplication/indexing
-                mask_float = mask.float()
-                factor = mask_float.numel() / mask_float.sum()  # factor per batch
-                # Calculate ROI loss using the generated mask
-                loss_mask_roi = (
-                    F.l1_loss(output * mask_float, batch.target * mask_float) * factor
-                )
-                # Combine losses
-                loss = (loss_image * 0.5) + (
-                    loss_mask_roi * 0.5
-                )  # Example: 50/50 weighting
-                # Log the ROI-specific loss
-                self.log(
-                    "train_loss_roi",
-                    loss_mask_roi.detach(),
-                    on_step=True,
-                    on_epoch=False,
-                    prog_bar=False,
-                    logger=log_to_logger,
-                    batch_size=batch.image.size(0),
-                )
-            else:
-                loss = loss_image
-                # Log ROI loss as 0 or NaN if not used/no annotation
-                self.log(
-                    "train_loss_roi",
-                    0.0,
-                    on_step=True,
-                    on_epoch=False,
-                    prog_bar=False,
-                    logger=log_to_logger,
-                    batch_size=batch.image.size(0),
-                )
-
-        elif self.metric == "ssim":
-            # ... (SSIM logic would also need adjustment if ROI is used)
-            # For now, assume L1 is the focus for ROI
-            loss = 1 - self.ssim(output, batch.target, batch.max_value)
-
-        # Log the final combined loss (or just image loss)
-        self.log(
-            "loss",
-            loss.detach(),
-            on_step=True,
-            on_epoch=True,
-            prog_bar=True,
-            logger=log_to_logger,
-            batch_size=batch.image.size(0),
-        )
         return loss
 
     def validation_step(self, batch, batch_idx):
         output = self(batch.image)
+        target = batch.target
         mean = batch.mean.unsqueeze(1).unsqueeze(2)
         std = batch.std.unsqueeze(1).unsqueeze(2)
 
-        # Recreate mask for validation consistency and visualization
         mask, annot_exists = self.create_mask(batch.annotations, output.shape)
         mask = mask.to(output.device)
-
-        # Calculate factor safely
-        if annot_exists and mask.sum() > 0:
-            factor = mask.numel() / mask.sum()
-        else:
-            factor = 1.0  # Set factor to 1 if mask sum is 0 or no annotation
-
-        val_loss_image = F.l1_loss(output, batch.target)
-
-        if (
-            annot_exists and mask.sum() > 0
-        ):  # Check mask sum again before calculating ROI loss
-            val_loss_roi = F.l1_loss(output * mask, batch.target * mask) * factor
-        else:
-            val_loss_roi = torch.tensor(
-                0.0, device=output.device, dtype=output.dtype
-            )  # Set ROI loss to 0
-
-        # For training, use the appropriate loss based on configuration
-        if self.use_roi:
-            val_loss = val_loss_image * 0.5 + val_loss_roi * 0.5
-        else:
-            val_loss = val_loss_image
-
-        # <<< Define log_to_logger >>>
+        has_roi_pixels = annot_exists and mask.sum() > 0
         log_to_logger = self.trainer is not None and self.trainer.logger is not None
+
+        # --- Always Calculate L1 Components --- #
+        val_loss_image_l1 = F.l1_loss(output, target)
+        val_loss_roi_l1 = (
+            F.l1_loss(output[mask], target[mask])
+            if has_roi_pixels
+            else torch.tensor(0.0, device=output.device)
+        )
+        # --- Calculate L1 Loss --- #
+        val_loss_l1 = val_loss_image_l1 * (1 - self.roi_weight) + val_loss_roi_l1 * (
+            self.roi_weight
+        )
+
+        # --- Always Calculate SSIM Components --- #
+        output_ssim = output.unsqueeze(1)
+        target_ssim = target.unsqueeze(1)
+        max_value_ssim = batch.max_value.view(-1)
+        val_loss_image_ssim = 1.0 - self.ssim(output_ssim, target_ssim, max_value_ssim)
+        val_loss_roi_ssim = (
+            1.0
+            - self.ssim(
+                output_ssim,
+                target_ssim,
+                max_value_ssim,
+                mask=mask.unsqueeze(1).float(),
+                use_roi=True,
+            )
+            if has_roi_pixels
+            else torch.tensor(0.0, device=output.device)
+        )
+        # --- Calculate SSIM Loss --- #
+        val_loss_ssim = val_loss_image_ssim * (
+            1 - self.roi_weight
+        ) + val_loss_roi_ssim * (self.roi_weight)
+
+        # --- Always Calculate Combined L1+SSIM Components --- #
+        val_loss_image_l1_ssim = (self.l1_ssim_alpha * val_loss_image_l1) + (
+            (1 - self.l1_ssim_alpha) * val_loss_image_ssim
+        )
+        val_loss_roi_l1_ssim = (
+            (self.l1_ssim_alpha * val_loss_roi_l1)
+            + ((1 - self.l1_ssim_alpha) * val_loss_roi_ssim)
+            if has_roi_pixels
+            else torch.tensor(0.0, device=output.device)
+        )
+
+        # --- Calculate Combined L1+SSIM Loss --- #
+        val_loss_l1_ssim = val_loss_image_l1_ssim * (
+            1 - self.roi_weight
+        ) + val_loss_roi_l1_ssim * (self.roi_weight)
+
+        # --- Determine Primary val_loss based on Experiment Config --- #
+        if self.metric == "l1":
+            if self.use_roi and has_roi_pixels:
+                # Weighted average for L1 ROI focus
+                val_loss = val_loss_l1
+            else:
+                # Use full image L1 if not using ROI or no ROI exists
+                val_loss = val_loss_image_l1
+        elif self.metric == "l1_ssim":
+            if self.use_roi and has_roi_pixels:
+                # Weighted average for L1+SSIM ROI focus
+                val_loss = val_loss_l1_ssim
+            else:
+                # Use full image L1+SSIM if not using ROI or no ROI exists
+                val_loss = val_loss_image_l1_ssim
+        else:
+            # Fallback or error for unknown metric
+            logging.warning(
+                f"Unknown metric '{self.metric}' in validation_step, using image L1 loss."
+            )
+            val_loss = val_loss_image_l1
+
+        # --- Logging (Log ALL calculated metrics) --- #
+        # Log the primary monitored loss
         self.log(
             "val_loss",
             val_loss.detach(),
             on_epoch=True,
-            prog_bar=True,
+            prog_bar=True,  # Keep this on prog bar
             sync_dist=True,
-            batch_size=batch.image.size(0),
             logger=log_to_logger,
+            batch_size=batch.image.size(0),
         )
-        # Log individual components for epoch-level averaging
+        # Log individual and combined components
         self.log(
-            "val_loss_image",
-            val_loss_image.detach(),
+            "val_loss_image_l1",
+            val_loss_image_l1.detach(),
             on_epoch=True,
             prog_bar=False,
             sync_dist=True,
-            batch_size=batch.image.size(0),
             logger=log_to_logger,
+            batch_size=batch.image.size(0),
         )
         self.log(
-            "val_loss_roi",
-            val_loss_roi.detach(),
+            "val_loss_roi_l1",
+            val_loss_roi_l1.detach(),
             on_epoch=True,
             prog_bar=False,
             sync_dist=True,
-            batch_size=batch.image.size(0),
             logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
+        self.log(
+            "val_loss_l1",
+            val_loss_l1.detach(),
+            on_epoch=True,
+            prog_bar=False,
+            sync_dist=True,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
+        self.log(
+            "val_loss_image_ssim",
+            val_loss_image_ssim.detach(),
+            on_epoch=True,
+            prog_bar=False,
+            sync_dist=True,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
+        self.log(
+            "val_loss_roi_ssim",
+            val_loss_roi_ssim.detach(),
+            on_epoch=True,
+            prog_bar=False,
+            sync_dist=True,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
+        self.log(
+            "val_loss_ssim",
+            val_loss_ssim.detach(),
+            on_epoch=True,
+            prog_bar=False,
+            sync_dist=True,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
+        self.log(
+            "val_loss_image_l1_ssim",
+            val_loss_image_l1_ssim.detach(),
+            on_epoch=True,
+            prog_bar=False,
+            sync_dist=True,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
+        self.log(
+            "val_loss_roi_l1_ssim",
+            val_loss_roi_l1_ssim.detach(),
+            on_epoch=True,
+            prog_bar=False,
+            sync_dist=True,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
+        )
+        self.log(
+            "val_loss_l1_ssim",
+            val_loss_l1_ssim.detach(),
+            on_epoch=True,
+            prog_bar=False,
+            sync_dist=True,
+            logger=log_to_logger,
+            batch_size=batch.image.size(0),
         )
 
-        # --- Log images including the mask ---
+        # --- Image/Metric Logging (Keep previous logic for PSNR/SSIM/NMSE via MriModule) ---
+        # <<< Re-add visualization block >>>
         num_batches_to_log = 1
         if (
             batch_idx < num_batches_to_log
@@ -463,8 +582,10 @@ class UnetModule(MriModule):
                 import torchvision
 
                 # Detach, move to CPU, denormalize
+                # Use the already calculated output/target if available, otherwise recalculate
+                # Note: output/target here are normalized, viz needs denormalization or normalization to [0,1]
                 output_viz = (output * std + mean).cpu().detach()
-                target_viz = (batch.target * std + mean).cpu().detach()
+                target_viz = (target * std + mean).cpu().detach()
 
                 # Add channel dimension if missing (B, H, W) -> (B, 1, H, W)
                 if output_viz.ndim == 3:
@@ -491,18 +612,17 @@ class UnetModule(MriModule):
                 annotations_len = len(batch.annotations) if annotations_available else 0
 
                 # Check for annotation consistency
-                if not annotations_available:
+                process_annotations = annotations_available and (
+                    actual_batch_size == annotations_len
+                )
+                if not process_annotations and annotations_available:
                     logging.debug(
-                        f"Batch object missing 'annotations' attribute in training validation step for epoch {self.current_epoch}. Skipping ROI drawing."
+                        f"Batch size mismatch for viz: images {actual_batch_size}, annotations {annotations_len}. Skipping ROI drawing."
                     )
-                    process_annotations = False
-                elif actual_batch_size != annotations_len:
+                elif not annotations_available:
                     logging.debug(
-                        f"Batch size mismatch in training validation step for epoch {self.current_epoch}: images {actual_batch_size}, annotations {annotations_len}. Skipping ROI drawing."
+                        "Batch missing annotations attribute. Skipping ROI drawing."
                     )
-                    process_annotations = False
-                else:
-                    process_annotations = True
 
                 for i in range(actual_batch_size):
                     try:
@@ -511,9 +631,8 @@ class UnetModule(MriModule):
                         output_img_tensor = output_viz[i]
                         error_img_tensor = diff_viz[i]
 
-                        # <<< Direct access to fname and slice_num >>>
-                        fname_str = batch.fname[i]  # Already a string
-                        slice_num_int = batch.slice_num[i]  # Already an int
+                        fname_str = batch.fname[i]
+                        slice_num_int = batch.slice_num[i]
                         base_tag = f"{Path(fname_str).stem}_Slice_{slice_num_int}"
 
                         # --- Get the generated mask for this sample --- #
@@ -530,6 +649,7 @@ class UnetModule(MriModule):
                         roi_overlay_tensor = target_img_tensor.clone()
                         if process_annotations:
                             try:
+                                # ... (rest of ROI border drawing logic using PIL) ...
                                 annotation_list_for_sample = batch.annotations[i]
                                 if (
                                     isinstance(annotation_list_for_sample, list)
@@ -586,7 +706,6 @@ class UnetModule(MriModule):
                                     f"Could not process annotations/draw ROI border for {base_tag} in training validation: {annot_e}"
                                 )
                         roi_overlay_tensor = torch.clamp(roi_overlay_tensor, 0.0, 1.0)
-                        # ----------------------------- #
 
                         # --- Add Labels & Create Grid (Update to 5 images) --- #
                         labeled_target = add_label_to_tensor(
@@ -599,22 +718,16 @@ class UnetModule(MriModule):
                         labeled_roi = add_label_to_tensor(
                             roi_overlay_tensor, "ROI Border"
                         )
-                        # <<< Label the mask itself >>>
-                        labeled_mask = add_label_to_tensor(mask_slice_tensor, "Mask")
 
-                        # <<< Update grid to 1x5 >>>
                         images_to_grid = [
                             labeled_target,
                             labeled_recon,
                             labeled_error,
                             labeled_roi,
-                            labeled_mask,
                         ]
-                        # Use nrow=5 for a single row
                         grid = torchvision.utils.make_grid(
-                            images_to_grid, nrow=5, padding=5, pad_value=0.5
+                            images_to_grid, nrow=4, padding=5, pad_value=0.5
                         )
-                        # ----------------------------- #
 
                         # --- Log the Grid --- #
                         self.logger.experiment.add_image(
@@ -634,42 +747,10 @@ class UnetModule(MriModule):
                 logging.warning(
                     f"Could not log validation images for batch {batch_idx} in epoch {self.current_epoch}: {e}"
                 )
+        # <<< End of re-added visualization block >>>
 
-        # Calculate metrics for on_validation_epoch_end aggregation
-        output_np = (output * std + mean).cpu().numpy()
-        target_np = (batch.target * std + mean).cpu().numpy()
-        max_value_np = batch.max_value.cpu().numpy()
-
-        mse_vals = {}
-        target_norms = {}
-        ssim_vals = {}
-
-        for i in range(output_np.shape[0]):  # Iterate through batch
-            # <<< Direct access to fname and slice_num >>>
-            fname = batch.fname[i]
-            slice_num = batch.slice_num[i]
-            max_val = max_value_np[i]
-            target_slice = target_np[i]
-            output_slice = output_np[i]
-
-            mse_val = evaluate.mse(target_slice, output_slice)
-            target_norm = evaluate.mse(target_slice, np.zeros_like(target_slice))
-            ssim_val = evaluate.ssim(
-                target_slice[None, ...], output_slice[None, ...], maxval=max_val
-            )
-
-            # Initialize nested dict if fname not seen before
-            if fname not in mse_vals:
-                mse_vals[fname] = {}
-                target_norms[fname] = {}
-                ssim_vals[fname] = {}
-
-            # Store metrics as tensors (can keep on CPU for aggregation)
-            mse_vals[fname][slice_num] = torch.tensor(mse_val)
-            target_norms[fname][slice_num] = torch.tensor(target_norm)
-            ssim_vals[fname][slice_num] = torch.tensor(ssim_val)
-
-        # Return values needed for metric calculation in on_validation_epoch_end
+        # Return values for aggregation (include all calculated losses)
+        # MriModule uses output/target/max_value for PSNR/SSIM aggregation.
         return {
             "batch_idx": batch_idx,
             "fname": batch.fname,
@@ -677,13 +758,16 @@ class UnetModule(MriModule):
             "max_value": batch.max_value,
             "output": output * std + mean,
             "target": batch.target * std + mean,
-            "val_loss": val_loss,
-            "val_loss_image": val_loss_image,
-            "val_loss_roi": val_loss_roi,
-            # Return computed metrics for aggregation
-            "mse_vals": mse_vals,
-            "target_norms": target_norms,
-            "ssim_vals": ssim_vals,
+            "val_loss": val_loss,  # Primary monitored loss
+            "val_loss_image_l1": val_loss_image_l1,
+            "val_loss_roi_l1": val_loss_roi_l1,
+            "val_loss_l1": val_loss_l1,
+            "val_loss_image_ssim": val_loss_image_ssim,
+            "val_loss_roi_ssim": val_loss_roi_ssim,
+            "val_loss_ssim": val_loss_ssim,
+            "val_loss_image_l1_ssim": val_loss_image_l1_ssim,
+            "val_loss_roi_l1_ssim": val_loss_roi_l1_ssim,
+            "val_loss_l1_ssim": val_loss_l1_ssim,
         }
 
     def validation_step_comparison(self, batch, batch_idx):
@@ -769,7 +853,7 @@ class UnetModule(MriModule):
         # return # No return needed
 
     def configure_optimizers(self):
-        optim = torch.optim.RMSprop(
+        optim = torch.optim.AdamW(
             self.parameters(),
             lr=self.lr,
             weight_decay=self.weight_decay,
@@ -858,6 +942,12 @@ class UnetModule(MriModule):
             default=False,
             type=bool,
             help="Use region of interest mask",
+        )
+        parser.add_argument(
+            "--l1_ssim_alpha",
+            default=0.85,
+            type=float,
+            help="Weight for L1 loss in combined L1+SSIM loss (default: 0.85)",
         )
 
         return parser

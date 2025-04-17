@@ -150,59 +150,96 @@ def get_roi_mask(annotations_list_for_sample, shape_hw):
     return mask
 
 
-def calculate_metrics(target, output, max_value, roi_mask=None):
-    """Calculates PSNR, SSIM, NMSE, optionally masked by ROI."""
+def calculate_metrics(target, output, max_value, roi_mask=None, l1_ssim_alpha=0.85):
+    """Calculates comprehensive metrics: PSNR, SSIM, NMSE, L1, SSIM Loss, L1+SSIM Loss (image and ROI)."""
     target_np = target.numpy()
     output_np = output.numpy()
 
-    # <<< Recalculate maxval from target data for robust PSNR >>>
+    # --- Standard Metrics (Higher is better for PSNR/SSIM, Lower for NMSE) --- #
     max_val_for_psnr = target_np.max()
-    # Ensure max_val is positive for PSNR calculation
-    if max_val_for_psnr <= 0:
-        logging.debug(
-            f"Target max value is non-positive ({max_val_for_psnr:.4f}), PSNR will be -inf or NaN."
-        )
-        # PSNR is undefined or -inf if maxval is 0 or target/output are constant zero.
-        # Assign NaN or handle as per desired reporting.
-        psnr_val = np.nan
-        psnr_roi_val = np.nan
-    else:
+    psnr_val = np.nan
+    ssim_val = np.nan
+    nmse_val = evaluate.nmse(target_np, output_np)
+
+    if max_val_for_psnr > 0:
         psnr_val = evaluate.psnr(target_np, output_np, maxval=max_val_for_psnr)
-        # We still use the original max_value from HDF5 for SSIM as it's often expected by that metric.
-        # Assign NaN or handle as per desired reporting.
+        # Use original HDF5 max_value for SSIM metric calculation
         ssim_val = evaluate.ssim(
             target_np[None, ...], output_np[None, ...], maxval=max_value
         )
-        nmse_val = evaluate.nmse(target_np, output_np)
 
-    metrics = {"psnr": psnr_val, "ssim": ssim_val, "nmse": nmse_val}
+    # --- Loss Metrics (Lower is better) --- #
+    # L1 Loss
+    l1_image_loss = np.mean(np.abs(target_np - output_np))
 
+    # SSIM Loss (1 - SSIM Metric)
+    # Need to recalculate SSIM metric using PyTorch/SSIM class for consistency with training?
+    # Or use evaluate.ssim result? Using evaluate.ssim for now.
+    # Handle NaN case for ssim_val
+    ssim_loss_image = 1.0 - ssim_val if not np.isnan(ssim_val) else np.nan
+
+    # Combined L1+SSIM Loss
+    l1_ssim_loss_image = (
+        (l1_ssim_alpha * l1_image_loss) + ((1 - l1_ssim_alpha) * ssim_loss_image)
+        if not np.isnan(ssim_loss_image)
+        else np.nan
+    )
+
+    # --- Initialize ROI metrics --- #
+    psnr_roi_val = np.nan
+    nmse_roi_val = np.nan
+    l1_roi_loss = np.nan
+    ssim_loss_roi = np.nan
+    l1_ssim_loss_roi = np.nan
+
+    # --- ROI Calculations --- #
     if roi_mask is not None and roi_mask.sum() > 0:
         roi_mask_np = roi_mask.numpy()
-        # Also use recalculated maxval for ROI PSNR
+        target_roi_np = target_np[roi_mask_np]
+        output_roi_np = output_np[roi_mask_np]
+
+        # Standard ROI Metrics
+        nmse_roi_val = evaluate.nmse(target_roi_np, output_roi_np)
         if max_val_for_psnr > 0:
-            # Calculate on masked data points
-            target_roi_np = target_np[roi_mask_np]
-            output_roi_np = output_np[roi_mask_np]
-            # Recalculate max specifically for the ROI region might be even more accurate
-            # max_val_roi = target_roi_np.max()
-            # if max_val_roi <= 0: psnr_roi_val = np.nan
-            # else: psnr_roi_val = evaluate.psnr(target_roi_np, output_roi_np, maxval=max_val_roi)
-            # --- OR --- use overall target max for consistency:
+            # Use overall target max for consistency
             psnr_roi_val = evaluate.psnr(
                 target_roi_np, output_roi_np, maxval=max_val_for_psnr
             )
 
-            metrics["psnr_roi"] = psnr_roi_val
-            metrics["nmse_roi"] = evaluate.nmse(target_roi_np, output_roi_np)
-        else:
-            metrics["psnr_roi"] = np.nan
-            metrics["nmse_roi"] = evaluate.nmse(
-                target_np[roi_mask_np], output_np[roi_mask_np]
-            )  # NMSE doesn't need maxval
-    else:
-        metrics["psnr_roi"] = np.nan
-        metrics["nmse_roi"] = np.nan
+        # Loss ROI Metrics
+        l1_roi_loss = np.mean(np.abs(target_roi_np - output_roi_np))
+        # Recalculate SSIM specifically for ROI using evaluate.ssim
+        # This might differ slightly from training's ROI SSIM if training uses a different implementation
+        ssim_metric_roi = evaluate.ssim(
+            target_roi_np[None, None, ...],  # Add batch/channel dims
+            output_roi_np[None, None, ...],
+            maxval=target_roi_np.max(),  # Use ROI max for ROI SSIM metric
+        )
+        ssim_loss_roi = (
+            1.0 - ssim_metric_roi if not np.isnan(ssim_metric_roi) else np.nan
+        )
+
+        l1_ssim_loss_roi = (
+            (l1_ssim_alpha * l1_roi_loss) + ((1 - l1_ssim_alpha) * ssim_loss_roi)
+            if not np.isnan(ssim_loss_roi)
+            else np.nan
+        )
+
+    metrics = {
+        # Standard Metrics
+        "psnr": psnr_val,
+        "ssim": ssim_val,
+        "nmse": nmse_val,
+        "psnr_roi": psnr_roi_val,
+        "nmse_roi": nmse_roi_val,
+        # Loss Metrics
+        "l1_loss": l1_image_loss,
+        "l1_loss_roi": l1_roi_loss,
+        "ssim_loss": ssim_loss_image,
+        "ssim_loss_roi": ssim_loss_roi,
+        "l1_ssim_loss": l1_ssim_loss_image,
+        "l1_ssim_loss_roi": l1_ssim_loss_roi,
+    }
 
     return metrics
 
@@ -567,13 +604,35 @@ def evaluate_models(args):
 
     # Calculate and print average metrics with highlighting
     try:
-        avg_metrics = results_df.groupby("model")[
-            ["psnr", "ssim", "nmse", "psnr_roi", "nmse_roi"]
-        ].mean()
+        # <<< Include all new metrics in groupby >>>
+        metric_cols = [
+            "psnr",
+            "ssim",
+            "nmse",
+            "psnr_roi",
+            "nmse_roi",
+            "l1_loss",
+            "l1_loss_roi",
+            "ssim_loss",
+            "ssim_loss_roi",
+            "l1_ssim_loss",
+            "l1_ssim_loss_roi",
+        ]
+        avg_metrics = results_df.groupby("model")[metric_cols].mean()
 
         # --- Highlight Best Values --- #
+        # <<< Update metric types >>>
         higher_is_better = ["psnr", "ssim", "psnr_roi"]
-        lower_is_better = ["nmse", "nmse_roi"]
+        lower_is_better = [
+            "nmse",
+            "nmse_roi",
+            "l1_loss",
+            "l1_loss_roi",
+            "ssim_loss",
+            "ssim_loss_roi",
+            "l1_ssim_loss",
+            "l1_ssim_loss_roi",
+        ]
         best_indices = {}
 
         for metric in avg_metrics.columns:
@@ -589,7 +648,7 @@ def evaluate_models(args):
 
         # Format the output manually for better alignment
         print("\n--- Average Metrics (Best in Bold) ---")
-        col_width = 12  # Define column width
+        col_width = 15  # <<< Adjust column width for new metrics >>>
         header = f"{'model':<30}"  # Adjust model name spacing if needed
         for col in avg_metrics.columns:
             header += f" {col:>{col_width}}"

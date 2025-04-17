@@ -4060,3 +4060,325 @@ Check the documentation of torch.load to learn more about types accepted by defa
 [2025-04-13 21:45:48] Final hyperparameters for unet_cbam_l1_attn:
   Batch size: 8
   Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-13 22:03:17 ====
+
+[2025-04-13 22:03:17] Starting experiment 1/5: baseline - Baseline U-Net
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-13 22:03:17] Final hyperparameters for unet_baseline_l1:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-14 01:31:24] Completed experiment: baseline
+  Training time: 208.11 minutes
+  Best overall validation loss (callback monitor): 0.271911
+  Final Epoch Validation Image Loss: 0.271911
+  Final Epoch Validation ROI Loss: 0.305464
+  Saved model to: logs/unet/unet_baseline_l1/checkpoints
+  Test results: []
+
+[2025-04-14 01:31:43] Starting experiment 2/5: cbam - U-Net with CBAM
+  attn_layer: True
+  metric: l1
+  use_roi: False
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-14 01:31:43] Final hyperparameters for unet_cbam_l1_attn:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-14 06:49:03] Completed experiment: cbam
+  Training time: 317.35 minutes
+  Best overall validation loss (callback monitor): 0.272094
+  Final Epoch Validation Image Loss: 0.272094
+  Final Epoch Validation ROI Loss: 0.305096
+  Saved model to: logs/unet/unet_cbam_l1_attn/checkpoints
+  Test results: []
+
+[2025-04-14 06:49:23] Starting experiment 3/5: full_attention - U-Net with CBAM and Attention Gates
+  attn_layer: True
+  metric: l1
+  use_roi: True
+  use_attention_gates: True
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-14 06:49:23] Final hyperparameters for unet_full_attention_l1_roi_attn_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-14 10:47:14 ====
+
+[2025-04-14 10:47:14] Starting experiment 1/2: roi_focus - U-Net with ROI focus
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: False
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-14 10:47:14] Final hyperparameters for unet_roi_focus_l1_roi:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-14 14:24:54] Completed experiment: roi_focus
+  Training time: 217.66 minutes
+  Best overall validation loss (callback monitor): 0.293908
+  Final Epoch Validation Image Loss: 0.278143
+  Final Epoch Validation ROI Loss: 0.309672
+  Saved model to: logs/unet/unet_roi_focus_l1_roi/checkpoints
+  Test results: []
+
+[2025-04-14 14:25:14] Starting experiment 2/2: attention_gates - U-Net with Attention Gates
+  attn_layer: False
+  metric: l1
+  use_roi: True
+  use_attention_gates: True
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-14 14:25:14] Final hyperparameters for unet_attention_gates_l1_roi_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-14 18:07:38] Completed experiment: attention_gates
+  Training time: 222.40 minutes
+  Best overall validation loss (callback monitor): 0.293299
+  Final Epoch Validation Image Loss: 0.277352
+  Final Epoch Validation ROI Loss: 0.309245
+  Saved model to: logs/unet/unet_attention_gates_l1_roi_agate/checkpoints
+  Test results: []
+
+[2025-04-14 18:07:59] All experiments completed!
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-14 18:09:43 ====
+
+[2025-04-14 18:09:43] Starting experiment 1/2: attention_gates_no_roi - U-Net with Attention Gates (No ROI Loss)
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: True
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-14 18:09:43] Final hyperparameters for unet_attention_gates_no_roi_l1_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-14 21:33:31 ====
+
+[2025-04-14 21:33:31] Starting experiment 1/5: attention_gates_no_roi - U-Net with Attention Gates (No ROI Loss)
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: True
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-14 21:33:31] Final hyperparameters for unet_attention_gates_no_roi_l1_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-14 21:33:49] ERROR in experiment attention_gates_no_roi: cannot access local variable 'loss_mask_roi_l1' where it is not associated with a value
+
+[2025-04-14 21:33:49] Starting experiment 2/5: full_attention_no_roi - U-Net with CBAM and Attention Gates (No ROI Loss)
+  attn_layer: True
+  metric: l1
+  use_roi: False
+  use_attention_gates: True
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-14 21:33:49] Final hyperparameters for unet_full_attention_no_roi_l1_attn_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-14 21:34:09] ERROR in experiment full_attention_no_roi: cannot access local variable 'loss_mask_roi_l1' where it is not associated with a value
+
+[2025-04-14 21:34:09] Starting experiment 3/5: baseline_l1_ssim - Baseline U-Net (L1+SSIM Loss)
+  attn_layer: False
+  metric: l1_ssim
+  use_roi: False
+  use_attention_gates: False
+[2025-04-14 21:34:09] Starting batch size search for unet_baseline_l1_ssim_l1_ssim
+  Optimal batch size for unet_baseline_l1_ssim_l1_ssim: 8 (based on speed)
+[2025-04-14 21:34:13] Starting learning rate search for unet_baseline_l1_ssim_l1_ssim
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-14 21:46:52 ====
+
+[2025-04-14 21:46:52] Starting experiment 1/5: attention_gates_no_roi - U-Net with Attention Gates (No ROI Loss)
+  attn_layer: False
+  metric: l1
+  use_roi: False
+  use_attention_gates: True
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-14 21:46:52] Final hyperparameters for unet_attention_gates_no_roi_l1_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-14 23:16:27 ====
+
+[2025-04-14 23:16:27] Starting experiment 1/4: full_attention_no_roi - U-Net with CBAM and Attention Gates (No ROI Loss)
+  attn_layer: True
+  metric: l1
+  use_roi: False
+  use_attention_gates: True
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-14 23:16:27] Final hyperparameters for unet_full_attention_no_roi_l1_attn_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-15 05:03:45] Completed experiment: full_attention_no_roi
+  Training time: 347.29 minutes
+  Best overall validation loss (callback monitor): 0.318952
+  Final Epoch Validation Image Loss: nan
+  Final Epoch Validation ROI Loss: nan
+  Saved model to: logs/unet/unet_full_attention_no_roi_l1_attn_agate/checkpoints
+  Test results: []
+
+[2025-04-15 05:04:06] Starting experiment 2/4: baseline_l1_ssim - Baseline U-Net (L1+SSIM Loss)
+  attn_layer: False
+  metric: l1_ssim
+  use_roi: False
+  use_attention_gates: False
+[2025-04-15 05:04:06] Starting batch size search for unet_baseline_l1_ssim_l1_ssim
+  Optimal batch size for unet_baseline_l1_ssim_l1_ssim: 4 (based on speed)
+[2025-04-15 05:05:08] Starting learning rate search for unet_baseline_l1_ssim_l1_ssim
+  Best learning rate for unet_baseline_l1_ssim_l1_ssim: 0.0001 (loss: 0.454537)
+[2025-04-15 05:06:30] Final hyperparameters for unet_baseline_l1_ssim_l1_ssim:
+  Batch size: 4
+  Learning rate: 0.0001
+[2025-04-15 08:43:40] Completed experiment: baseline_l1_ssim
+  Training time: 217.17 minutes
+  Best overall validation loss (callback monitor): 0.317706
+  Final Epoch Validation Image Loss: nan
+  Final Epoch Validation ROI Loss: nan
+  Saved model to: logs/unet/unet_baseline_l1_ssim_l1_ssim/checkpoints
+  Test results: []
+
+[2025-04-15 08:44:01] Starting experiment 3/4: full_attention_l1_ssim - U-Net with CBAM & Attn Gates (L1+SSIM Loss, No ROI)
+  attn_layer: True
+  metric: l1_ssim
+  use_roi: False
+  use_attention_gates: True
+[2025-04-15 08:44:01] Starting batch size search for unet_full_attention_l1_ssim_l1_ssim_attn_agate
+  Optimal batch size for unet_full_attention_l1_ssim_l1_ssim_attn_agate: 8 (based on speed)
+[2025-04-15 08:52:54] Starting learning rate search for unet_full_attention_l1_ssim_l1_ssim_attn_agate
+  Best learning rate for unet_full_attention_l1_ssim_l1_ssim_attn_agate: 0.0001 (loss: 0.432128)
+[2025-04-15 08:57:34] Final hyperparameters for unet_full_attention_l1_ssim_l1_ssim_attn_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-15 09:51:17 ====
+
+[2025-04-15 09:51:17] Starting experiment 1/2: full_attention_l1_ssim - U-Net with CBAM & Attn Gates (L1+SSIM Loss, No ROI)
+  attn_layer: True
+  metric: l1_ssim
+  use_roi: False
+  use_attention_gates: True
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-15 09:51:17] Final hyperparameters for unet_full_attention_l1_ssim_l1_ssim_attn_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-15 15:50:41] Completed experiment: full_attention_l1_ssim
+  Training time: 359.40 minutes
+  Best overall validation loss (callback monitor): 0.318760
+  Final Epoch Validation Image Loss: nan
+  Final Epoch Validation ROI Loss: nan
+  Saved model to: logs/unet/unet_full_attention_l1_ssim_l1_ssim_attn_agate/checkpoints
+  Test results: []
+
+[2025-04-15 15:51:03] Starting experiment 2/2: full_attention_l1_ssim_roi - U-Net with CBAM & Attn Gates (L1+SSIM Loss, with ROI)
+  attn_layer: True
+  metric: l1_ssim
+  use_roi: True
+  use_attention_gates: True
+  Using stored hyperparameters: Batch Size=8, LR=0.0001
+[2025-04-15 15:51:03] Final hyperparameters for unet_full_attention_l1_ssim_roi_l1_ssim_roi_attn_agate:
+  Batch size: 8
+  Learning rate: 0.0001
+[2025-04-16 01:12:02] Completed experiment: full_attention_l1_ssim_roi
+  Training time: 560.98 minutes
+  Best overall validation loss (callback monitor): 0.294326
+  Final Epoch Validation Image Loss: nan
+  Final Epoch Validation ROI Loss: nan
+  Saved model to: logs/unet/unet_full_attention_l1_ssim_roi_l1_ssim_roi_attn_agate/checkpoints
+  Test results: []
+
+[2025-04-16 01:12:22] All experiments completed!
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-16 13:39:51 ====
+
+[2025-04-16 13:39:51] Starting experiment 1/3: baseline_l1_ssim - Baseline U-Net (L1+SSIM Loss), No ROI
+  attn_layer: False
+  metric: l1_ssim
+  use_roi: False
+  use_attention_gates: False
+[2025-04-16 13:39:51] Starting batch size search for unet_baseline_l1_ssim_l1_ssim
+  Optimal batch size for unet_baseline_l1_ssim_l1_ssim: 8 (based on speed)
+[2025-04-16 13:39:54] Starting learning rate search for unet_baseline_l1_ssim_l1_ssim
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-16 13:45:15 ====
+
+[2025-04-16 13:45:15] Starting experiment 1/3: baseline_l1_ssim - Baseline U-Net (L1+SSIM Loss), No ROI
+  attn_layer: False
+  metric: l1_ssim
+  use_roi: False
+  use_attention_gates: False
+[2025-04-16 13:45:15] Starting batch size search for unet_baseline_l1_ssim_l1_ssim
+  Optimal batch size for unet_baseline_l1_ssim_l1_ssim: 8 (based on speed)
+[2025-04-16 13:46:16] Starting learning rate search for unet_baseline_l1_ssim_l1_ssim
+  Best learning rate for unet_baseline_l1_ssim_l1_ssim: 0.0003 (loss: 0.418799)
+[2025-04-16 13:48:26] Final hyperparameters for unet_baseline_l1_ssim_l1_ssim:
+  Batch size: 8
+  Learning rate: 0.0003
+[2025-04-16 17:18:23] Completed experiment: baseline_l1_ssim
+  Training time: 209.93 minutes
+  Best overall validation loss (callback monitor): 0.359322
+  Final Epoch Validation Image Loss: nan
+  Final Epoch Validation ROI Loss: nan
+  Saved model to: logs/unet/unet_baseline_l1_ssim_l1_ssim/checkpoints
+  Test results: []
+
+[2025-04-16 17:18:42] Starting experiment 2/3: cbam_l1_ssim - U-Net with CBAM and L1+SSIM Loss
+  attn_layer: True
+  metric: l1_ssim
+  use_roi: False
+  use_attention_gates: False
+[2025-04-16 17:18:42] Starting batch size search for unet_cbam_l1_ssim_l1_ssim_attn
+  Optimal batch size for unet_cbam_l1_ssim_l1_ssim_attn: 8 (based on speed)
+[2025-04-16 17:20:08] Starting learning rate search for unet_cbam_l1_ssim_l1_ssim_attn
+  Best learning rate for unet_cbam_l1_ssim_l1_ssim_attn: 0.001 (loss: 0.419050)
+[2025-04-16 17:23:12] Final hyperparameters for unet_cbam_l1_ssim_l1_ssim_attn:
+  Batch size: 8
+  Learning rate: 0.001
+[2025-04-16 22:41:13] Completed experiment: cbam_l1_ssim
+  Training time: 318.01 minutes
+  Best overall validation loss (callback monitor): 0.359162
+  Final Epoch Validation Image Loss: nan
+  Final Epoch Validation ROI Loss: nan
+  Saved model to: logs/unet/unet_cbam_l1_ssim_l1_ssim_attn/checkpoints
+  Test results: []
+
+[2025-04-16 22:41:32] Starting experiment 3/3: full_attention_l1_ssim - U-Net with CBAM & Attn Gates (L1+SSIM Loss, No ROI)
+  attn_layer: True
+  metric: l1_ssim
+  use_roi: False
+  use_attention_gates: True
+[2025-04-16 22:41:32] Starting batch size search for unet_full_attention_l1_ssim_l1_ssim_attn_agate
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-16 22:41:57 ====
+
+[2025-04-16 22:41:57] Starting experiment 1/4: full_attention_l1_ssim - U-Net with CBAM & Attn Gates (L1+SSIM Loss, No ROI)
+  attn_layer: True
+  metric: l1_ssim
+  use_roi: False
+  use_attention_gates: True
+[2025-04-16 22:41:57] Starting batch size search for unet_full_attention_l1_ssim_l1_ssim_attn_agate
+  Optimal batch size for unet_full_attention_l1_ssim_l1_ssim_attn_agate: 8 (based on speed)
+[2025-04-16 22:42:00] Starting learning rate search for unet_full_attention_l1_ssim_l1_ssim_attn_agate
+
+
+==== STARTING NEW EXPERIMENT RUN 2025-04-16 22:44:49 ====
+
+[2025-04-16 22:44:49] Starting experiment 1/4: full_attention_l1_ssim - U-Net with CBAM & Attn Gates (L1+SSIM Loss, No ROI)
+  attn_layer: True
+  metric: l1_ssim
+  use_roi: False
+  use_attention_gates: True
+[2025-04-16 22:44:49] Starting batch size search for unet_full_attention_l1_ssim_l1_ssim_attn_agate
