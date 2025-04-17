@@ -173,7 +173,14 @@ def find_optimal_batch_size(
             # <<< End nested try/except >>>
 
             # Clean up to free memory (moved back inside main try block logic)
-            del trainer, test_model
+            try:
+                del test_model
+            except NameError:
+                pass
+            try:
+                del trainer
+            except NameError:
+                pass
             torch.cuda.empty_cache() if torch.cuda.is_available() else None
 
         # Outer exception handling for other errors (like OOM)
@@ -181,6 +188,16 @@ def find_optimal_batch_size(
             print(f"  Batch size {batch_size} failed with error: {type(e).__name__}")
             print(f"  Error details: {str(e)}")
             # ... (traceback printing) ...
+            # <<< Add cleanup in exception block >>>
+            try:
+                del test_model
+            except NameError:
+                pass
+            try:
+                del trainer
+            except NameError:
+                pass
+            torch.cuda.empty_cache() if torch.cuda.is_available() else None
             # Break loop on other errors too
             break
 
@@ -301,7 +318,14 @@ def find_optimal_learning_rate(
             # Continue to the next learning rate
 
         # Clean up
-        del trainer, model
+        try:
+            del model
+        except NameError:
+            pass
+        try:
+            del trainer
+        except NameError:
+            pass
         torch.cuda.empty_cache() if torch.cuda.is_available() else None
 
     # Find the learning rate with the lowest validation loss
@@ -370,6 +394,7 @@ def run_experiments():
             "batch_size": 8,
             "lr": 0.0001,
         },
+        "unet_cbam_l1_ssim_roi_l1_ssim_roi_attn": {"batch_size": 8, "lr": 0.00003},
         # Add entries for other experiments as they are successfully run
         # "unet_attention_gates_l1_roi_agate": { ... },
         # "unet_full_attention_l1_roi_attn_agate": { ... },
@@ -592,9 +617,9 @@ def run_experiments():
         # "full_attention_no_roi",
         # "baseline_l1_ssim",
         # "cbam_l1_ssim",
-        "attention_gates_l1_ssim",
-        "full_attention_l1_ssim",
-        "baseline_l1_ssim_roi",
+        # "attention_gates_l1_ssim",
+        # "full_attention_l1_ssim",
+        # "baseline_l1_ssim_roi",
         "cbam_l1_ssim_roi",
         "attention_gates_l1_ssim_roi",
         "full_attention_l1_ssim_roi",
@@ -817,6 +842,18 @@ def run_experiments():
             ),
         ]
 
+        # --- Check for checkpoint to resume from --- #
+        resume_ckpt_path = None
+        last_ckpt_path = exp_dir / "checkpoints" / "last.ckpt"
+        if last_ckpt_path.is_file():
+            print(f"  Found last checkpoint at: {last_ckpt_path}")
+            resume_ckpt_path = str(last_ckpt_path)
+            # Optional: Could add logic here to only resume specific target_experiment_names
+            # if experiment['name'] in names_to_resume:
+            #    resume_ckpt_path = str(last_ckpt_path)
+            # else:
+            #    print(f"  Checkpoint found but not resuming {experiment['name']}")
+
         # Create trainer with performance optimizations
         # <<< Remove batch limits for full run >>>
         trainer = pl.Trainer(
@@ -830,6 +867,7 @@ def run_experiments():
             check_val_every_n_epoch=1,  # Run validation every epoch
             gradient_clip_val=1.0,  # Add gradient clipping for stability
             deterministic=False,  # Disable deterministic mode for speed
+            resume_from_checkpoint=resume_ckpt_path,  # Pass path if found, otherwise None
             # limit_train_batches=10, # REMOVED
             # limit_val_batches=5    # REMOVED
         )
@@ -904,9 +942,64 @@ def run_experiments():
                     f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] ERROR in experiment {experiment['name']}: {str(e)}\n"
                 )
             print(f"ERROR in experiment {experiment['name']}: {str(e)}")
+            # Clear memory even if there was an error before continuing
+            try:
+                del model
+            except NameError:
+                pass
+            try:
+                del data_module
+            except NameError:
+                pass
+            try:
+                del trainer
+            except NameError:
+                pass
+            try:
+                del tensorboard
+            except NameError:
+                pass
+            try:
+                del callbacks
+            except NameError:
+                pass
+            try:
+                del best_model
+            except NameError:
+                pass
+            torch.cuda.empty_cache() if torch.cuda.is_available() else None
             continue  # Continue to next experiment even if this one fails
 
-        # Clear memory between experiments
+        # --- Explicit Cleanup --- #
+        # Ensure objects from this iteration are deleted before the next
+        try:
+            del model
+        except NameError:
+            pass
+        try:
+            del data_module
+        except NameError:
+            pass
+        try:
+            del trainer
+        except NameError:
+            pass
+        try:
+            del tensorboard
+        except NameError:
+            pass
+        try:
+            del callbacks
+        except NameError:
+            pass
+        # Delete best_model if it was loaded during the test step
+        if "best_model" in locals():
+            try:
+                del best_model
+            except NameError:
+                pass
+
+        # Clear memory between experiments (AFTER explicit deletion)
         torch.cuda.empty_cache() if torch.cuda.is_available() else None
 
         # Add a small delay between experiments

@@ -4382,3 +4382,49 @@ Check the documentation of torch.load to learn more about types accepted by defa
   use_roi: False
   use_attention_gates: True
 [2025-04-16 22:44:49] Starting batch size search for unet_full_attention_l1_ssim_l1_ssim_attn_agate
+  Optimal batch size for unet_full_attention_l1_ssim_l1_ssim_attn_agate: 8 (based on speed)
+[2025-04-16 22:46:23] Starting learning rate search for unet_full_attention_l1_ssim_l1_ssim_attn_agate
+  Best learning rate for unet_full_attention_l1_ssim_l1_ssim_attn_agate: 0.001 (loss: 0.423939)
+[2025-04-16 22:49:41] Final hyperparameters for unet_full_attention_l1_ssim_l1_ssim_attn_agate:
+  Batch size: 8
+  Learning rate: 0.001
+[2025-04-17 04:23:46] Completed experiment: full_attention_l1_ssim
+  Training time: 334.07 minutes
+  Best overall validation loss (callback monitor): 0.359042
+  Final Epoch Validation Image Loss: nan
+  Final Epoch Validation ROI Loss: nan
+  Saved model to: logs/unet/unet_full_attention_l1_ssim_l1_ssim_attn_agate/checkpoints
+  Test results: []
+
+[2025-04-17 04:24:05] Starting experiment 2/4: baseline_l1_ssim_roi - Baseline U-Net (L1+SSIM Loss), with ROI
+  attn_layer: False
+  metric: l1_ssim
+  use_roi: True
+  use_attention_gates: False
+[2025-04-17 04:24:05] Starting batch size search for unet_baseline_l1_ssim_roi_l1_ssim_roi
+  Optimal batch size for unet_baseline_l1_ssim_roi_l1_ssim_roi: 8 (based on speed)
+[2025-04-17 04:25:13] Starting learning rate search for unet_baseline_l1_ssim_roi_l1_ssim_roi
+  Best learning rate for unet_baseline_l1_ssim_roi_l1_ssim_roi: 0.0003 (loss: 0.396494)
+[2025-04-17 04:27:32] Final hyperparameters for unet_baseline_l1_ssim_roi_l1_ssim_roi:
+  Batch size: 8
+  Learning rate: 0.0003
+[2025-04-17 09:10:00] Completed experiment: baseline_l1_ssim_roi
+  Training time: 282.47 minutes
+  Best overall validation loss (callback monitor): 0.292006
+  Final Epoch Validation Image Loss: nan
+  Final Epoch Validation ROI Loss: nan
+  Saved model to: logs/unet/unet_baseline_l1_ssim_roi_l1_ssim_roi/checkpoints
+  Test results: []
+
+[2025-04-17 09:10:20] Starting experiment 3/4: cbam_l1_ssim_roi - U-Net with CBAM and L1+SSIM Loss and ROI
+  attn_layer: True
+  metric: l1_ssim
+  use_roi: True
+  use_attention_gates: False
+[2025-04-17 09:10:20] Starting batch size search for unet_cbam_l1_ssim_roi_l1_ssim_roi_attn
+  Optimal batch size for unet_cbam_l1_ssim_roi_l1_ssim_roi_attn: 8 (based on speed)
+[2025-04-17 09:13:28] Starting learning rate search for unet_cbam_l1_ssim_roi_l1_ssim_roi_attn
+  Best learning rate for unet_cbam_l1_ssim_roi_l1_ssim_roi_attn: 0.0003 (loss: 0.405156)
+[2025-04-17 09:17:46] Final hyperparameters for unet_cbam_l1_ssim_roi_l1_ssim_roi_attn:
+  Batch size: 8
+  Learning rate: 0.0003
