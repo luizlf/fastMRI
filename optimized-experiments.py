@@ -584,6 +584,26 @@ def run_experiments():
                 "use_attention_gates": False,
             },
         },
+        {
+            "name": "attention_gates_l1_ssim",
+            "description": "U-Net with Attention Gates and L1+SSIM Loss",
+            "params": {
+                "attn_layer": False,
+                "metric": "l1_ssim",
+                "use_roi": False,
+                "use_attention_gates": True,
+            },
+        },
+        {
+            "name": "attention_gates_l1_ssim_roi",
+            "description": "U-Net with Attention Gates and L1+SSIM Loss and ROI",
+            "params": {
+                "attn_layer": False,
+                "metric": "l1_ssim",
+                "use_roi": True,
+                "use_attention_gates": True,
+            },
+        },
     ]
 
     # Create results directory
@@ -617,12 +637,12 @@ def run_experiments():
         # "full_attention_no_roi",
         # "baseline_l1_ssim",
         # "cbam_l1_ssim",
-        # "attention_gates_l1_ssim",
+        "attention_gates_l1_ssim",
         # "full_attention_l1_ssim",
         # "baseline_l1_ssim_roi",
-        "cbam_l1_ssim_roi",
+        # "cbam_l1_ssim_roi",
         "attention_gates_l1_ssim_roi",
-        "full_attention_l1_ssim_roi",
+        # "full_attention_l1_ssim_roi",
         # "full_attention_l1_ssim_roi",
         # "baseline",
         # "cbam",
@@ -867,7 +887,7 @@ def run_experiments():
             check_val_every_n_epoch=1,  # Run validation every epoch
             gradient_clip_val=1.0,  # Add gradient clipping for stability
             deterministic=False,  # Disable deterministic mode for speed
-            resume_from_checkpoint=resume_ckpt_path,  # Pass path if found, otherwise None
+            # resume_from_checkpoint=resume_ckpt_path # REMOVED: Pass to fit instead
             # limit_train_batches=10, # REMOVED
             # limit_val_batches=5    # REMOVED
         )
@@ -876,7 +896,8 @@ def run_experiments():
         try:
             start_time = time.time()
             print(f"  Starting full training for {version_name}...")  # Updated print
-            trainer.fit(model, datamodule=data_module)
+            # <<< Pass checkpoint path to fit method >>>
+            trainer.fit(model, datamodule=data_module, ckpt_path=resume_ckpt_path)
             end_time = time.time()
 
             # Log experiment completion
