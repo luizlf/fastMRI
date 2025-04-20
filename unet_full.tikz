@@ -1,0 +1,143 @@
+\documentclass[tikz, border=10pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes.geometric, arrows.meta, calc, backgrounds, fit}
+
+\begin{document}
+
+% Define layers: background for skips and boxes, nodes for shapes, main for forward arrows
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{nodes}
+\pgfdeclarelayer{main}
+\pgfsetlayers{background,nodes,main}
+
+\begin{tikzpicture}[scale=0.8, transform shape,
+    node distance=0.6cm and 0.5cm, % Consistent spacing
+    conv/.style={rectangle, draw, thick, minimum width=2cm, minimum height=0.8cm, fill=blue!20, text centered, inner sep=2pt},
+    pool/.style={circle, draw, thick, minimum size=0.7cm, fill=red!30, text centered}, % AvgPool
+    up/.style={circle, draw, thick, minimum size=0.5cm, fill=green!30, text centered},
+    concat/.style={rectangle, draw, thick, dashed, minimum width=0.7cm, minimum height=0.6cm, fill=yellow!30, text centered, inner sep=1pt},
+    attn_gate/.style={diamond, draw, thick, aspect=1.5, fill=violet!30, minimum size=0.8cm, text centered, inner sep=1pt},
+    cbam/.style={rectangle, draw, thick, rounded corners, minimum width=1.2cm, minimum height=0.7cm, fill=orange!30, text centered, inner sep=1pt},
+    final/.style={rectangle, draw, thick, minimum width=2cm, minimum height=0.7cm, fill=gray!20, text centered, inner sep=2pt},
+    arrow/.style={-{Latex[length=1.5mm, width=1mm]}}, % Consistent arrows
+    skipr/.style={-{Latex[length=1.5mm, width=1mm]}, dashed, bend right=45},
+    path_bg/.style={rectangle, draw=gray, dashed, rounded corners, fill=black!5, fill opacity=0.3, inner sep=0.3cm} % Consistent background
+]
+
+% --- Place all nodes onto the 'nodes' layer ---
+\begin{pgfonlayer}{nodes}
+    % Input
+    \node (input) [conv, minimum width=1.2cm, fill=white] {Input (1)};
+
+    % Encoder Path (Vertical) with CBAM
+    \node (enc1) [conv, below=of input] {ConvBlock (64)};
+    \node[below=-0.05cm of enc1, font=\scriptsize] {2x(Conv+IN+LReLU)};
+    \node (cbam1_down) [cbam, right=of enc1] {CBAM};
+    \node (pool1) [pool, right=of cbam1_down] {AP};
+
+    \node (enc2) [conv, below=of enc1] {ConvBlock (128)};
+    \node[below=-0.05cm of enc2, font=\scriptsize] {2x(Conv+IN+LReLU)};
+    \node (cbam2_down) [cbam, right=of enc2] {CBAM};
+    \node (pool2) [pool, right=of cbam2_down] {AP};
+
+    \node (enc3) [conv, below=of enc2] {ConvBlock (256)};
+    \node[below=-0.05cm of enc3, font=\scriptsize] {2x(Conv+IN+LReLU)};
+    \node (cbam3_down) [cbam, right=of enc3] {CBAM};
+    \node (pool3) [pool, right=of cbam3_down] {AP};
+
+    % Bottleneck with CBAM
+    \node (bottleneck) [conv, below=0.75cm of enc3] {ConvBlock (512)};
+    \node[below=-0.05cm of bottleneck, font=\scriptsize] {2x(Conv+IN+LReLU)};
+    \node (cbam_bn) [cbam, left=of bottleneck] {CBAM}; % CBAM after bottleneck
+    \node[below=0.35cm of bottleneck, inner sep=0, font=\scriptsize]{Bottleneck};
+
+    % Decoder Path (Vertical) with Attention Gates and CBAM
+    % Level 3
+    \node (up3) [up, left=1.5cm of cbam_bn] {Up};
+    \node (ag3) [attn_gate, left=of up3] {AG};
+    \node (concat3) [concat, left=0.6cm of ag3] {Cat};
+    \node (cbam3_up) [cbam, left=of concat3] {CBAM};
+    \node (dec3) [conv, left=of cbam3_up] {ConvBlock (256)};
+    \node[below=-0.05cm of dec3, font=\scriptsize] {2x(Conv+IN+LReLU)};
+
+    % Level 2
+    \node (up2) [up, above=of dec3] {Up};
+    \node (ag2) [attn_gate, left=of up2] {AG};
+    \node (concat2) [concat, left=0.6cm of ag2] {Cat};
+    \node (cbam2_up) [cbam, left=of concat2] {CBAM};
+    \node (dec2) [conv, left=of cbam2_up] {ConvBlock (128)};
+    \node[below=-0.05cm of dec2, font=\scriptsize] {2x(Conv+IN+LReLU)};
+
+    % Level 1
+    \node (up1) [up, above=of dec2] {Up};
+    \node (ag1) [attn_gate, left=of up1] {AG};
+    \node (concat1) [concat, left=0.6cm of ag1] {Cat};
+    \node (cbam1_up) [cbam, left=of concat1] {CBAM};
+    \node (dec1) [conv, left=of cbam1_up] {ConvBlock (64)};
+    \node[below=-0.05cm of dec1, font=\scriptsize] {2x(Conv+IN+LReLU)};
+
+    % Output
+    \node (output) [final, above=of dec1] {1x1 Conv (1)};
+    \node (output_img) [conv, above=of output, minimum width=1.2cm, fill=white] {Output (1)};
+
+\end{pgfonlayer}
+% --- End of nodes layer ---
+
+% --- Place skip connections and background boxes onto the 'background' layer ---
+\begin{pgfonlayer}{background}
+    % Skip Connections (Curved) - FROM Encoder CBAM TO Attention Gate
+    \draw[skipr] (cbam3_down.north west) .. controls +(west:3.0cm) and +(north:0.8cm) .. node[pos=0.4, below, font=\scriptsize]{x} (ag3.north);
+    \draw [skipr] (cbam2_down.north west) .. controls +(west:7.0cm) and +(north:0.8cm) .. node[pos=0.4, below, font=\scriptsize]{x} (ag2.north);
+    \draw [skipr] (cbam1_down.north west) .. controls +(west:11.0cm) and +(north:0.8cm) .. node[pos=0.4, below, font=\scriptsize]{x} (ag1.north);
+
+    % Background Rectangles using fit - Including CBAMs and AGs
+    \node[path_bg, fit=(input) (enc1) (cbam1_down) (pool1) (enc2) (cbam2_down) (pool2) (enc3) (cbam3_down) (pool3), label={[font=\small, anchor=south]north:Contracting Path (Encoder)}] (encoder_box) {};
+    \node[path_bg, fit=(output_img) (output) (dec1) (cbam1_up) (concat1) (ag1) (up1) (dec2) (cbam2_up) (concat2) (ag2) (up2) (dec3) (cbam3_up) (concat3) (ag3) (up3), label={[font=\small, anchor=south]north:Expanding Path (Decoder)}] (decoder_box) {};
+
+\end{pgfonlayer}
+% --- End of background layer ---
+
+% --- Place main connections onto the 'main' layer (drawn last) ---
+\begin{pgfonlayer}{main}
+    % Connections - Encoder (Input -> Enc -> CBAM -> Pool -> Next Enc)
+    \draw [arrow] (input) -- (enc1);
+    \draw [arrow] (enc1) -- (cbam1_down);
+    \draw [arrow] (cbam1_down) -- (pool1);
+    \draw [arrow] (pool1) -- (enc2.north east);
+    \draw [arrow] (enc2) -- (cbam2_down);
+    \draw [arrow] (cbam2_down) -- (pool2);
+    \draw [arrow] (pool2) -- (enc3.north east);
+    \draw [arrow] (enc3) -- (cbam3_down);
+    \draw [arrow] (cbam3_down) -- (pool3);
+    \draw [arrow] (pool3) -- (bottleneck.east);
+    \draw [arrow] (bottleneck) -- (cbam_bn); % Bottleneck to its CBAM
+
+    % Connections - Decoder (Bottleneck CBAM -> Up -> AG & Cat; AG -> Cat -> CBAM_up -> Dec -> Next Up)
+    \draw [arrow] (cbam_bn) -- (up3); % From bottleneck CBAM
+    \draw [arrow] (up3) -- node[pos=0.3, above, font=\scriptsize]{g} (ag3.east);
+    \draw [arrow] (up3.south) -- ++(0,-0.2) -| (concat3.south);
+    \draw [arrow] (ag3.west) -- node[pos=0.3, above, font=\scriptsize]{$x \cdot \alpha$} (concat3.east);
+    \draw [arrow] (concat3) -- (cbam3_up); % Cat -> CBAM_up
+    \draw [arrow] (cbam3_up) -- (dec3); % CBAM_up -> Dec
+    \draw [arrow] (dec3) -- (up2);
+
+    \draw [arrow] (up2) -- node[pos=0.3, above, font=\scriptsize]{g} (ag2.east);
+    \draw [arrow] (up2.south) -- ++(0,-0.2) -| (concat2.south);
+    \draw [arrow] (ag2.west) -- node[pos=0.3, above, font=\scriptsize]{$x \cdot \alpha$} (concat2.east);
+    \draw [arrow] (concat2) -- (cbam2_up); % Cat -> CBAM_up
+    \draw [arrow] (cbam2_up) -- (dec2); % CBAM_up -> Dec
+    \draw [arrow] (dec2) -- (up1);
+
+    \draw [arrow] (up1) -- node[pos=0.3, above, font=\scriptsize]{g} (ag1.east);
+    \draw [arrow] (up1.south) -- ++(0,-0.2) -| (concat1.south);
+    \draw [arrow] (ag1.west) -- node[pos=0.3, above, font=\scriptsize]{$x \cdot \alpha$} (concat1.east);
+    \draw [arrow] (concat1) -- (cbam1_up); % Cat -> CBAM_up
+    \draw [arrow] (cbam1_up) -- (dec1); % CBAM_up -> Dec
+    \draw [arrow] (dec1) -- (output);
+    \draw [arrow] (output) -- (output_img);
+\end{pgfonlayer}
+% --- End of main layer ---
+
+\end{tikzpicture}
+
+\end{document} 

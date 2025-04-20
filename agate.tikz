@@ -1,0 +1,67 @@
+\documentclass[tikz, border=10pt]{standalone}
+\usepackage{tikz}
+\usepackage{amssymb}
+\usetikzlibrary{positioning, shapes.geometric, arrows.meta, calc, backgrounds, fit}
+
+\begin{document}
+
+\begin{tikzpicture}[scale=0.8, transform shape,
+    node distance=0.8cm and 1cm, % Adjusted spacing
+    % Styles similar to cbam_block.tikz, adapted for AG
+    block/.style={rectangle, draw, thick, fill=white, minimum width=2.2cm, minimum height=1.1cm, align=center},
+    op_block/.style={rectangle, draw, thick, fill=blue!20, minimum width=1.5cm, minimum height=0.8cm, align=center},
+    operation/.style={circle, draw, thick, fill=yellow!30, minimum size=0.7cm},
+    activation/.style={rectangle, draw, thick, fill=orange!20, minimum width=1.2cm, minimum height=0.8cm, align=center},
+    arrow/.style={-{Latex[length=1.5mm, width=1mm]}},
+    path_bg/.style={rectangle, draw=gray, dashed, rounded corners, fill=black!5, fill opacity=0.3, inner sep=0.4cm}
+]
+
+% Inputs
+\node[block] (g_input) {Gating Signal\\(from Decoder $g$)};
+\node[block, below=1.5cm of g_input] (x_input) {Skip Connection\\(from Encoder $x$)};
+
+% Processing Paths
+\node[op_block, right=of g_input] (wg) {$W_g$\\Conv+BN};
+\node[op_block, right=of x_input] (wx) {$W_x$\\Conv+BN};
+
+% Addition
+\coordinate (mid_point) at ($(wg)!0.5!(wx)$);
+\node[operation, right=1.3cm of mid_point] (add) {+};
+
+% Psi Path (Combined Block)
+\node[op_block, right=1.3cm of add] (psi_block) {$\psi$};
+\node[above=-0.05cm of psi_block, font=\scriptsize, align=center] {ReLU+Conv+\\BN+Sigmoid};
+
+% Final Multiplication - Aligned with x path, right of Psi
+\coordinate (mult_pos) at (wx -| psi_block);
+\node[operation, at=(mult_pos)] (multiply) {$\otimes$};
+
+% Output
+\node[block, right=of multiply] (output) {Attended Features\\($x \cdot \alpha$)};
+
+% Draw connections - Rerouted for clarity
+\draw[arrow] (g_input) -- node[above, font=\scriptsize] {$g$} (wg);
+\draw[arrow] (x_input) -- node[above, font=\scriptsize] {$x$} (wx);
+
+\draw[arrow] (wg.east) -- (add.north);
+\draw[arrow] (wx.east) -- (add.south);
+
+\draw[arrow] (add) -- (psi_block) node[midway, above, font=\scriptsize] {$g_1 + x_1$};
+
+% Route psi output (alpha) to multiplication
+\draw[arrow] (psi_block.south) -- node[pos=0.4, right, font=\scriptsize] {$\alpha$} (multiply.north);
+
+% Route original x input to multiplication - Clear path
+\draw[arrow] (wx) -- node[above, font=\scriptsize] {Original $x$} (multiply.west);
+
+\draw[arrow] (multiply) -- (output);
+
+% Optional background box
+\begin{scope}[on background layer]
+    \node[path_bg, fit=(g_input) (x_input) (wg) (wx) (add) (psi_block) (multiply) (output),
+          label={[anchor=south]north:{Attention Gate (AG) Internal Architecture}}] {};
+\end{scope}
+
+\end{tikzpicture}
+
+\end{document} 

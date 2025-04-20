@@ -1,0 +1,61 @@
+\documentclass[tikz, border=10pt]{standalone}
+\usepackage{tikz}
+\usepackage{amssymb}
+\usetikzlibrary{positioning, shapes.geometric, arrows.meta, calc, backgrounds, fit}
+
+\begin{document}
+
+\begin{tikzpicture}[scale=0.9, transform shape,
+    node distance=1cm and 1.2cm, % Spacing for clarity
+    % Styles consistent with other diagrams
+    block/.style={rectangle, draw, thick, fill=white, minimum width=2.5cm, minimum height=1.2cm, align=center},
+    op_block/.style={rectangle, draw, thick, fill=blue!20, minimum width=2cm, minimum height=1cm, align=center},
+    mask_block/.style={rectangle, draw, thick, fill=green!20, minimum width=2cm, minimum height=1cm, align=center},
+    operation/.style={circle, draw, thick, fill=yellow!30, minimum size=0.8cm},
+    arrow/.style={-{Latex[length=1.5mm, width=1mm]}},
+    path_bg/.style={rectangle, draw=gray, dashed, rounded corners, fill=black!5, fill opacity=0.3, inner sep=0.5cm}
+]
+
+% Inputs
+\node[block] (output) {Model Output};
+\node[block, below=1cm of output] (target) {Ground Truth Target};
+\node[mask_block, below=2.5cm of target] (mask) {ROI Mask};
+
+% Loss Calculations
+\node[op_block, right=2cm of output] (loss_image) {Calculate Loss\\(e.g., L1, SSIM)};
+\node[op_block, right=2cm of target] (loss_roi) {Calculate Loss\\(e.g., L1, SSIM)};
+
+% Combination
+\coordinate (mid_loss) at ($(loss_image)!0.5!(loss_roi)$);
+\node[operation, right=2.5cm of mid_loss] (combine) {+};
+
+% Output
+\node[block, right=1.5cm of combine] (total_loss) {Total Weighted Loss\\$L_{total}$};
+
+% Draw Connections
+% Inputs to Full Image Loss
+\draw[arrow] (output) -- (loss_image.west);
+\draw[arrow] (target) -- (loss_image.west);
+
+% Inputs Masked for ROI Loss
+\draw[arrow] (output) -- ++(1,0) |- node[pos=0.25, above right, font=\scriptsize]{Output[mask]} (loss_roi.north west);
+\draw[arrow] (target) -- ++(1,0) |- node[pos=0.25, below right, font=\scriptsize]{Target[mask]} (loss_roi.south west);
+% Indicate Mask Usage
+\draw[arrow, dashed, gray] (mask.north) -- ++(0, 1.2cm) -| node[pos=0.2, below, font=\scriptsize]{Apply Mask} ($(loss_roi.west) + (-0.5cm, 0)$);
+
+% Losses to Combination
+\draw[arrow] (loss_image.east) -- node[above, font=\scriptsize]{$L_{image} \times (1-w_{roi})$} (combine.north);
+\draw[arrow] (loss_roi.east) -- node[below, font=\scriptsize]{$L_{ROI} \times w_{roi}$} (combine.south);
+
+% Combination to Output
+\draw[arrow] (combine) -- node[above, font=\scriptsize]{$L_{total}$} (total_loss);
+
+% Background Box
+\begin{scope}[on background layer]
+    \node[path_bg, fit=(output) (target) (mask) (loss_image) (loss_roi) (combine) (total_loss),
+          label={[anchor=south]north:ROI-Weighted Loss Calculation}] {};
+\end{scope}
+
+\end{tikzpicture}
+
+\end{document} 

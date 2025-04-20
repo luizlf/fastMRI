@@ -1,0 +1,112 @@
+\documentclass[tikz, border=10pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes.geometric, arrows.meta, calc, backgrounds, fit}
+
+\begin{document}
+
+\begin{tikzpicture}[scale=0.8, transform shape,
+    % Styles for different components - matching unet_cbam.tikz color scheme and styles
+    block/.style={rectangle, draw, thick, fill=white, minimum width=1.2cm, minimum height=0.8cm, align=center},
+    pool/.style={rectangle, draw, thick, fill=red!30, minimum width=1.6cm, minimum height=0.8cm, align=center},
+    conv/.style={rectangle, draw, thick, fill=blue!20, minimum width=1.2cm, minimum height=0.8cm, align=center},
+    operation/.style={circle, draw, thick, fill=yellow!30, minimum size=0.7cm},
+    concat/.style={rectangle, draw, dashed, thick, fill=yellow!30, minimum width=0.7cm, minimum height=0.6cm, text centered, inner sep=1pt},
+    activation/.style={rectangle, draw, thick, fill=orange!20, minimum width=1.2cm, minimum height=0.8cm, align=center},
+    arrow/.style={-{Latex[length=1.5mm, width=1mm]}},
+    node distance=0.6cm and 0.5cm,
+    path_bg/.style={rectangle, draw=gray, dashed, rounded corners, fill=black!5, fill opacity=0.3, inner sep=0.3cm}
+]
+
+% Input
+\node[block] (input) {Input\\Feature Map};
+
+% Channel Attention Module - Simplified Conv Blocks
+\coordinate[right=2cm of input] (channel_start);
+%\node[above=0.6cm of channel_start] (channel_title) {\textbf{Channel Attention Module}};
+
+% Upper path
+\node[pool, right=1.0cm of input] (avg_pool) {Adaptive\\AvgPool2d};
+\node[conv, right=0.8cm of avg_pool] (cb_avg) {ConvBlock};
+\node[below=-0.05cm of cb_avg, font=\scriptsize] {2x(Conv+ReLU)};
+
+% Lower path
+\node[pool, below=0.6cm of avg_pool] (max_pool) {Adaptive\\MaxPool2d};
+\node[conv, right=0.8cm of max_pool] (cb_max) {ConvBlock};
+\node[below=-0.05cm of cb_max, font=\scriptsize] {2x(Conv+ReLU)};
+
+% Addition and sigmoid
+\node[operation, right=1.5cm of $(cb_avg)!0.5!(cb_max)$] (add) {+};
+\node[activation, right=0.5cm of add] (sigmoid_ca) {Sigmoid};
+
+% Channel attention output - positioned with enough space
+\node[operation, below=1.5cm of sigmoid_ca] (mult_ca) {$\otimes$};
+
+% Spatial Attention Module - Terminology adjusted
+\coordinate[right=3cm of mult_ca] (spatial_start);
+%\node[above=0.5cm of spatial_start] (spatial_title) {\textbf{Spatial Attention Module}};
+
+% Channel pooling operations - well spaced
+\node[pool, right=2.2cm of mult_ca] (avg_pool_s) {Channel\\AvgPool};
+\node[pool, below=0.4cm of avg_pool_s] (max_pool_s) {Channel\\MaxPool};
+
+% Spatial attention path
+\node[concat, right=1.5cm of $(avg_pool_s)!0.5!(max_pool_s)$] (concat) {Cat};
+\node[conv, right=0.6cm of concat] (conv_s) {Conv2d};
+\node[activation, right=0.5cm of conv_s] (sigmoid_sa) {Sigmoid};
+\node[operation, right=0.8cm of sigmoid_sa] (mult_sa) {$\otimes$};
+
+% Output
+\node[block, right=2.0cm of mult_sa] (output) {Output\\Feature Map};
+
+% Draw connections for Channel Attention - carefully routed
+\draw[arrow] (input) -- node[above, sloped, pos=0.35, font=\scriptsize] {$x$} (avg_pool);
+\draw[arrow] (input.south) |- (max_pool.west);
+\draw[arrow] (avg_pool) -- (cb_avg);
+\draw[arrow] (cb_avg.east) -- (add);
+\draw[arrow] (max_pool) -- (cb_max);
+\draw[arrow] (cb_max.east) -- (add);
+\draw[arrow] (add) -- (sigmoid_ca);
+
+% Sigmoid to mult_ca connection - clear routing
+\draw[arrow] (sigmoid_ca) -- node[right, font=\scriptsize] {$M_c$} ++(0,-1.8) -- (mult_ca);
+
+% Input to mult_ca connection - clear path
+\draw[arrow] (input.south) |- (mult_ca.west) node[below, pos=0.5, font=\scriptsize] {$x$};
+
+% Channel attention output to spatial attention - non-overlapping
+\draw[arrow] (mult_ca) -- node[above, pos=0.4, font=\scriptsize] {$x' = x \otimes M_c$} (avg_pool_s);
+\draw[arrow] (mult_ca) |- (max_pool_s);
+
+% Spatial attention connections - well spaced
+\draw[arrow] (avg_pool_s) -- (concat);
+\draw[arrow] (max_pool_s) -- (concat);
+\draw[arrow] (concat) -- (conv_s);
+\draw[arrow] (conv_s) -- (sigmoid_sa);
+\draw[arrow] (sigmoid_sa) -- node[above, pos=0.7, font=\scriptsize] {$M_s$} (mult_sa);
+
+% Final connection - clear routing
+\draw[arrow] (mult_ca) -- ++(0,-2.6) -| (mult_sa.south) node[below, pos=0.5, font=\scriptsize] {$x'$};
+\draw[arrow] (mult_sa) -- node[above, font=\scriptsize] {$x'' = x' \otimes M_s$} (output);
+
+% Module bounding boxes with proper spacing and style
+\begin{scope}[on background layer]
+    % CBAM title
+    %\node[above=1.0cm of input, xshift=6cm] (cbam_title) {\LARGE \textbf{CBAM: Convolutional Block Attention Module}};
+    
+    % Channel attention module box - Matched background style
+    \node[path_bg,
+          fit= (avg_pool) (max_pool) (cb_avg) (cb_max) (add) (sigmoid_ca), label={[font=\small, anchor=south]north:Channel Attention Module}] (ca_box) {};
+    
+    % Spatial attention module box - Matched background style
+    \node[path_bg,
+          fit= (avg_pool_s) (max_pool_s) (concat) 
+              (conv_s) (sigmoid_sa), label={[font=\small, anchor=south]north:Spatial Attention Module}] (sa_box) {};
+    
+    % CBAM outer box
+   % \node[draw=purple!30, thick, fill=purple!5, rounded corners, inner sep=0.5cm,
+   %       fit=(cbam_title) (input) (output) (ca_box) (sa_box) (mult_ca) (mult_sa)] {};
+\end{scope}
+
+\end{tikzpicture}
+
+\end{document}

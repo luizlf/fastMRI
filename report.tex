@@ -1,0 +1,358 @@
+\documentclass[
+	%a4paper, % Use A4 paper size
+	letterpaper, % Use US letter paper size
+]{jdf}
+
+\addbibresource{references.bib}
+\usepackage{placeins} % Add this to the preamble
+\usepackage{url}
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes.geometric, arrows.meta, calc}
+\usepackage{standalone}
+\usepackage{graphicx}
+\usepackage{tikzscale}
+
+\title{CS 6440 - Submission Paper \\ A Novel Approach for MRI Reconstruction Acceleration Using Deep Learning}
+
+\author{Luiz Santos \qquad Anderson Baraldo \\
+{\tt\small \{luiz.santos, anderson.baraldo\}@gatech.edu} \\ %\and 
+Georgia Institute of Technology}
+
+\begin{document}
+%\lsstyle
+
+\maketitle
+
+\section{Section I - Implementation and Links}
+
+\subsection{Team Details}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Name} & \textbf{GTID} & \textbf{Role} \\
+\hline
+Luiz Santos & lsantos49 & UX and Project Management, Backend Developer \\
+\hline
+Anderson Baraldo & abaraldo3 & Frontend \& Backend Developer \\
+\hline
+\end{tabular}
+\caption{Team Members}
+\label{tab:team_members}
+\end{table}
+
+\subsection{External Links}
+
+A web application built with H2O Wave framework enables deployment of interactive data science tools in Python. Its ML workflow integration and real-time capabilities make it ideal for our MRI reconstruction, featuring minimal front-end code requirements and flexibility.
+The deployment is live and accessible via the following URL:
+
+\url{https://health-project-gr92-178a1fec0886.herokuapp.com/}
+
+The complete source code for this MRI reconstruction project is available on GitHub. For access to the codebase, implementation details, and documentation, please visit:
+
+\url{https://github.com/luizlf/fastMRI}
+
+A detailed presentation explaining and demoing this research is available as an unlisted video on YouTube. To watch the full presentation, please visit:
+
+\url{https://youtu.be/XXXXXXXX}
+
+\subsection{Final Task Chart/List}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Phase} & \textbf{Start} & \textbf{End} \\ \hline
+Data Preparation & 03/01 & 03/15 \\ \hline
+Model Development & 03/15 & 04/01 \\ \hline
+Experimentation & 04/01 & 04/11 \\ \hline
+Analysis \& Documentation & 04/11 & 04/18 \\ \hline
+\end{tabular}
+\caption{MRI Reconstruction Project Timeline}
+\label{tab:timeline}
+\end{table}
+
+
+\begin{itemize}
+    \item \textbf{Data Preparation}
+    \begin{itemize}
+        \item Set up environment, install dependencies
+        \item Download, preprocess fastMRI and fastMRI+ datasets
+        \item Implement k-space undersampling and annotation integration
+    \end{itemize}
+    
+    \item \textbf{Model Development}
+    \begin{itemize}
+        \item Implement baseline U-Net and CBAM with ROI-focused loss
+        \item Expand annotations for better contextual coverage
+        \item Develop evaluation framework for region-specific assessment
+    \end{itemize}
+    
+    \item \textbf{Experimentation}
+    \begin{itemize}
+        \item Train models with different hyperparameters
+        \item Compare annotation-guided vs. standard models
+        \item Assess reconstruction quality in annotated vs. non-annotated regions
+        \item Refine approach based on results
+    \end{itemize}
+    
+    \item \textbf{Analysis and Documentation}
+    \begin{itemize}
+        \item Compile results, document findings
+        \item Visualize key outcomes
+        \item Finalize report and presentation
+    \end{itemize}
+\end{itemize}
+
+\clearpage
+
+\section{Section II - Project Summary and Discussion}
+
+\subsection{Background and Need} % Roughly Half a Page (0.5 pages)
+
+Magnetic Resonance Imaging (MRI) is essential in modern medicine, providing high-resolution images without ionizing radiation. However, conventional MRI scans are time-consuming, leading to patient discomfort, motion artifacts, and limited accessibility. Long scan durations reduce patient throughput and delay diagnoses, particularly in critical cases like stroke and trauma.
+
+MRI reconstruction traditionally requires full k-space sampling for high-quality images via inverse Fourier transform. Advances such as compressed sensing allow undersampling to speed up scans but often introduce artifacts or demand high computational resources (\cite{hammernik2017learning}). Deep learning-based methods, particularly convolutional neural networks (CNNs), have shown promise in reconstructing undersampled data while preserving diagnostic quality (\cite{schlemper2017deep}).
+
+Despite these advances, most models treat all image regions equally, overlooking clinically significant areas. We propose leveraging clinical annotations from the fastMRI+ dataset to enhance deep learning-based MRI reconstruction, improving image quality in diagnostically relevant regions while maintaining overall fidelity (\cite{fastMRI}, \cite{fast_mri_plus}).
+
+Faster, high-quality MRI reconstruction is crucial for clinical efficiency and patient care. Long scan times increase costs, patient discomfort, and motion artifacts that degrade image quality. In emergencies, delays can impact treatment decisions, as in stroke cases.
+
+Prolonged immobility in MRI scans causes discomfort, particularly for claustrophobic patients, young children, and infants, often necessitating sedation. Longer scans also heighten the risk of motion artifacts, reducing diagnostic reliability.
+
+While deep learning-based methods have shown progress, they often neglect clinically relevant regions. By integrating clinical annotations, we aim to improve diagnostic accuracy without increasing scan time. This aligns with research trends in personalized, pathology-aware MRI reconstruction.
+
+\begin{figure}[htbp] % Or other placement specifiers like [H] with float package
+    \centering % Center the figure
+    \includegraphics[width=\linewidth]{Figures/unet_baseline.pdf}
+    \caption{Baseline U-Net model structure. The contracting path (right) successively applies convolutional blocks and max pooling (MP), while the expanding path (left) uses upsampling (Up), concatenation (Cat) with features from the contracting path via skip connections, and convolutional blocks.}
+    \label{fig:unet-baseline}
+\end{figure}
+
+
+\subsection{Solution} % Roughly a Full Page (1 page) in Length
+
+We propose a deep learning-based MRI reconstruction framework that integrates clinical annotations to enhance diagnostic regions. Using the fastMRI and fastMRI+ datasets (\cite{fast_mri_plus}), we evaluate multiple architectures to validate the impact of region-specific weighting.
+
+Our approach introduces an ROI-based loss function to prioritize clinically significant areas:
+
+\begin{equation}
+L_{total} = \frac{L_{image} + \alpha \cdot L_{ROI}}{2}, \quad 
+\alpha = \frac{\text{image pixels}}{\text{ROI pixels}}
+\end{equation}
+
+To corroborate the hypothesis that ROI-based prioritization improves diagnostic relevance, we compare performance across different architectures. The standard convolutional network used as a starting point is the U-Net, depicted in Figure \ref{fig:unet-baseline}. We evaluate the following architectures:
+\begin{itemize}
+    \item \textbf{Baseline U-Net}: Standard convolutional network for MRI reconstruction (Figure \ref{fig:unet-baseline}).
+    \item \textbf{U-Net with ROI-weighted loss}: Incorporates region-specific prioritization using the baseline U-Net.
+    \item \textbf{CBAM-enhanced U-Net}: Introduces attention mechanisms (CBAM blocks \cite{cbam_paper}) into the baseline U-Net to improve focus on critical areas (Figure \ref{fig:unet-cbam}). The internal structure of the CBAM block is detailed in Figure \ref{fig:cbam}.
+    \item \textbf{Attention Gates U-Net}: Modifies skip connections using Attention Gates (AG \cite{att_gate}) to selectively focus on relevant features (Figure \ref{fig:unet-agate}). The internal architecture of the AG is shown in Figure \ref{fig:agate}.
+    \item \textbf{Full Attention U-Net}: Combines both CBAM within convolutional blocks and Attention Gates on skip connections (diagram not shown).
+\end{itemize}
+
+An comprehensive experiment automation system was built to enable robust, repeatable execution of multiple configurations. After initial ROI-focus modifications showed limited improvements, we explored the various attention mechanisms detailed above.
+
+We implemented hyperparameter optimization, including functions for optimal batch size selection based on execution speed and learning rate search across model configurations. The system stores successfully identified parameters to accelerate subsequent runs.
+
+Training stability was enhanced by replacing \texttt{StepLR} with \texttt{ReduceLROnPlateau} scheduler, refactoring metric logging to resolve validation loss calculation issues, and improving the testing framework. Logging clarity was improved by suppressing non-critical warnings and resolving various runtime exceptions.
+
+Reconstruction quality is assessed using SSIM, PSNR, and NMSE, focusing on annotated regions. This study aims to validate whether annotation-driven deep learning improves diagnostic accuracy while preserving overall image fidelity.
+
+
+\subsection{Discussion and Future Work} %  (Roughly Half a Page (0.5 pages))
+
+Our study aimed to enhance MRI reconstruction by incorporating clinical annotations to guide the process. Contrary to our initial hypothesis, models trained with the ROI-weighted loss function performed worse than their counterparts without such guidance when evaluated on overall image quality metrics (Figures \ref{fig:image_loss_comparison_l1} and \ref{fig:image_loss_comparison_l1ssim}). This unexpected result likely stems from the fundamental nature of MRI reconstruction. Undersampling occurs in k-space (the frequency domain), and due to the properties of the Fourier transform, missing k-space data introduces global aliasing artifacts across the entire image domain, rather than localized errors within specific regions. Therefore, forcing the model to prioritize pixel-level accuracy within a predefined image-domain ROI may create conflicting objectives, potentially hindering the model's ability to address the underlying global reconstruction challenge and leading to unnatural results or poor generalization. This is further supported by the observation that models trained with the explicit ROI loss term showed slightly higher (worse) final image loss compared to their counterparts trained without it, as seen in Figures \ref{fig:image_loss_comparison_l1} and \ref{fig:image_loss_comparison_l1ssim}. This contrasts with attention mechanisms (e.g., \cite{att_is}), which are data-driven and may be better suited to learning the complex, non-local relationships required to suppress these global artifacts.
+
+Interestingly, when examining the validation loss calculated specifically within the annotated ROI regions (Figures \ref{fig:roi_loss_comparison_l1} and \ref{fig:roi_loss_comparison_l1ssim}), the Attention Gates (AG) architecture demonstrated a notably lower final loss compared to other architectures like Baseline, CBAM, and Full Attention. This relative improvement for AG was observed regardless of whether the model was trained with the ROI loss term or not, suggesting that the attention mechanism employed by AG is indeed somewhat effective at learning and prioritizing locally relevant features within the ROI, achieving approximately a 2\% lower loss in that specific region compared to others. 
+
+Despite the challenges with explicit ROI weighting, attention-based models (CBAM, AG, Full Attention) generally demonstrated promising results compared to the baseline, even with relatively small architectures and limited training epochs due to infrastructure constraints. The validation plots suggest that attention mechanisms provide a more effective approach to focusing on relevant image features than explicit ROI-based loss functions for this task.
+
+For future work, we recommend exploring several directions. First, a more nuanced approach to ROI weighting that adaptively adjusts during training could prevent the model from overfitting to specific regions. Second, incorporating uncertainty estimation into the reconstruction process would allow clinicians to identify areas where the model's predictions might be less reliable. Third, multi-task learning approaches that simultaneously optimize for reconstruction quality and diagnostic task performance might better align with clinical objectives. Finally, investigating the transferability of attention mechanisms across different anatomical regions and imaging protocols would assess the generalizability of our findings.
+
+Additionally, addressing the gap in publicly available annotated MRI datasets would significantly advance this field, as current datasets like fastMRI+ have limited annotation coverage and standardization, making it challenging to develop and validate annotation-guided reconstruction techniques across diverse clinical scenarios.
+
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Figures/validation_l1_loss_image_loss_train_roi_comparison.png}
+    \caption{Side-by-side comparison of Image L1 Validation Loss vs. Training Step. Left: Models trained without explicit ROI loss term. Right: Models trained with ROI loss term. Note the similar final performance across architectures and slightly higher loss for ROI-trained models.}
+    \label{fig:image_loss_comparison_l1}
+\end{figure*}
+
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Figures/validation_l1ssim_loss_image_loss_train_roi_comparison.png}
+    \caption{Side-by-side comparison of Image L1+SSIM Validation Loss vs. Training Step. Left: Models trained without explicit ROI loss term. Right: Models trained with ROI loss term. Similar trends as Figure \ref{fig:image_loss_comparison_l1} are observed.}
+    \label{fig:image_loss_comparison_l1ssim}
+\end{figure*}
+
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Figures/validation_l1_loss_roi_loss_train_roi_comparison.png}
+    \caption{Side-by-side comparison of ROI L1 Validation Loss vs. Training Step. Left: Models trained without explicit ROI loss term. Right: Models trained with ROI loss term. Note the lower final loss for the Attention Gates (AG) model in both plots.}
+    \label{fig:roi_loss_comparison_l1}
+\end{figure*}
+
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Figures/validation_l1ssim_loss_roi_loss_train_roi_comparison.png}
+    \caption{Side-by-side comparison of ROI L1+SSIM Validation Loss vs. Training Step. Left: Models trained without explicit ROI loss term. Right: Models trained with ROI loss term. AG architecture again shows favorable performance within the ROI.}
+    \label{fig:roi_loss_comparison_l1ssim}
+\end{figure*}
+
+\FloatBarrier
+\subsection{References}
+% \bibliography{references}
+\printbibliography[heading=none]
+
+% \subsection{Datasets and Data Sources}
+
+% The project will utilize the following datasets:
+
+% \begin{table}[!h]
+% \centering
+% \renewcommand{\arraystretch}{1.2}
+% \begin{tabular}{|l|p{8cm}|}
+% \hline
+% \textbf{Dataset} & \textbf{Details} \\ \hline
+% \textbf{fastMRI} (\cite{fastMRI}) & 1,172 knee MRI volumes (34,742 slices) from clinical 3T/1.5T MRI systems. \\ \hline
+% \textbf{fastMRI+} (\cite{fast_mri_plus}) & 16,154 bounding box annotations across 22 pathology categories. \\ \hline
+% \textbf{Synthetic Data} (Optional) & Augmented via rotation, scaling, and noise injection. \\ \hline
+% \end{tabular}
+% \caption{Datasets used for training and evaluation.}
+% \label{tab:datasets}
+% \end{table}
+
+% The fastMRI dataset recommends specific splits for training (973 volumes), validation (199 volumes), and test (118 volumes) sets, ensuring consistent evaluation across different reconstruction approaches.
+
+% \subsection{Architecture Diagram}
+
+% The solution architecture consists of the following components:
+
+% \textbf{Pipeline Overview}:
+% \begin{itemize}
+%     \item \textbf{Data Ingestion}: Load MRI images and k-space data.
+%     \item \textbf{Preprocessing}: Normalize, mask, and transform data; simulate accelerated acquisition (25\% retained, 8\% central k-space preserved).
+%     \item \textbf{Model Training}: Train U-Net with ROI-weighted loss; expand bounding box annotations into binary masks.
+%     \item \textbf{Annotation Integration}: Map fastMRI+ clinical annotations, expanding them 5× for better contextual coverage.
+%     \item \textbf{Inference \& Evaluation}: Reconstruct images, assess SSIM, PSNR, NMSE in full and annotated regions.
+% \end{itemize}
+
+
+% \section{Accomplishments / Tasks Completed}
+% Building on the previous sprint's model implementations, this period focused heavily on \textbf{Experiment Automation}, \textbf{Exploring Attention Mechanisms}, \textbf{Hyperparameter Optimization Setup}, and \textbf{Debugging} to ensure reliable execution and find performance improvements.
+
+% \begin{itemize}
+%     \item \textbf{Experiment Automation (\texttt{optimized-experiments.py}):} Migrated the experimental setup from a Jupyter Notebook (\texttt{model.ipynb}) to a dedicated Python script. This facilitates more robust, automated, and repeatable execution of multiple experimental configurations, including hyperparameter searches.
+%     \item \textbf{Attention Mechanism Implementation (\texttt{src/unet/unet.py}):} Implemented and configured experiments for several attention mechanisms, motivated by the need to explore alternatives after initial ROI-focus modifications did not yield significant improvements over the baseline:
+%         \begin{itemize}
+%             \item \textbf{CBAM (Convolutional Block Attention Module):} Integrates channel attention (learning 'what' features are important) and spatial attention (learning 'where' features are important) into the U-Net convolutional blocks. Experiment: \texttt{cbam}.
+        
+%             \item \textbf{Attention Gates:} Modifies skip connections to selectively focus on relevant features from the encoder path before concatenation in the decoder path, aiming to reduce irrelevant feature propagation. Experiment: \texttt{attention\_gates}.
+%             \item \textbf{Full Attention:} Combines both CBAM within convolutional blocks and Attention Gates on skip connections. Experiment: \texttt{full\_attention}.
+%         \end{itemize}
+%     \item \textbf{Hyperparameter Search Refinement (\texttt{optimized-experiments.py}):}
+%         \begin{itemize}
+%             \item Modified the batch size search function (\texttt{find\_optimal\_batch\_size}) to select the optimal size based on execution speed rather than just maximum memory fit, which is more relevant for the MPS backend.
+%             \item Implemented a manual learning rate search function (\texttt{find\_optimal\_learning\_rate}) to identify suitable learning rates across different model configurations.
+%             \item \begin{sloppypar}Introduced a mechanism to store successfully found hyperparameters (\texttt{OPTIMIZED\_PARAMS} dictionary) and added a user prompt to allow reusing these parameters, significantly speeding up subsequent runs by skipping the search phase.\end{sloppypar}
+%         \end{itemize}
+%     \item \textbf{Training Stability and Logging Improvements:}
+%         \begin{itemize}
+%             \item \begin{sloppypar}
+%                 Replaced the \texttt{StepLR} learning rate scheduler with \texttt{ReduceLROnPlateau}, allowing the learning rate to adapt based on validation loss stagnation (\texttt{src/unet/unet\_module.py}).\end{sloppypar}
+%             \item \begin{sloppypar}
+%                 Resolved issues with incorrect validation loss values (often appearing as 0.0 or `inf`) being used by callbacks (\texttt{ModelCheckpoint}, \texttt{EarlyStopping}) by refactoring metric logging. Moved metric calculation (MSE, SSIM, Norm) to \texttt{validation\_step} and relied on PyTorch Lightning's automatic epoch-level aggregation for \texttt{val\_loss}, \texttt{val\_loss\_image}, and \texttt{val\_loss\_roi} (\texttt{src/unet/unet\_module.py}, \texttt{src/mri\_module.py}).\end{sloppypar}
+%             \item Suppressed recurring, non-critical warnings related to dataloader workers, MPS/CUDA autocast/GradScaler interactions, and batch size inference to improve log clarity (\texttt{optimized-experiments.py}).
+%             \item Addressed and resolved various \texttt{RuntimeError}, \texttt{TypeError}, \texttt{NameError}, and \texttt{UnboundLocalError} exceptions encountered during debugging the hyperparameter search and training loops.
+%         \end{itemize}
+%     \item \textbf{Testing Framework Update (\texttt{src/mri\_module.py}, \texttt{src/unet/unet\_module.py}):} Migrated the testing logic from the deprecated \texttt{test\_epoch\_end} hook to the current \texttt{on\_test\_epoch\_end} hook, including storing test step outputs as instance attributes.
+%     \item \textbf{Experiment Execution Control (\texttt{optimized-experiments.py}):} Added functionality to selectively run specific experiments by filtering the main experiment list, facilitating targeted testing and debugging.
+% \end{itemize}
+
+
+\clearpage
+
+\section{Section III - Technical Documentation}
+
+\subsection{Data Format Handling: DICOM and HDF5}
+
+Digital Imaging and Communications in Medicine (DICOM) is the international standard for medical image information and related data. It defines the formats for medical images that can be exchanged with the data and quality necessary for clinical use. DICOM incorporates standards for imaging modalities such as computed tomography (CT), magnetic resonance imaging (MRI), ultrasound, and radiography. A DICOM file contains not only the image pixel data but also extensive metadata, including patient information, acquisition parameters, and device details, ensuring data interoperability between different medical devices and systems.
+
+While DICOM is the ubiquitous standard for storing and exchanging *reconstructed medical images* and related information in clinical environments, this project operates at an earlier stage of the imaging pipeline. We primarily utilize the Hierarchical Data Format version 5 (HDF5) format, following the structure provided by the fastMRI dataset (\\cite{fastMRI}). This dataset packages the *raw, complex-valued k-space data* acquired directly from the MRI scanner, along with reconstruction targets and relevant metadata (like acceleration factors). Processing this raw k-space data is necessary *before* a standard DICOM image file containing pixel data is typically generated.
+
+Our codebase is therefore built around reading and processing these \texttt{.h5} files containing raw k-space data. The data loading utilities (\texttt{src/data/mri\_data.py}) handle the extraction of k-space data, performing necessary transformations like undersampling simulation and converting data into PyTorch tensors suitable for model input.
+
+Currentlly, the web application interface (described in Section \ref{sec:user_manual}) expects input data in this \texttt{.h5} format, containing the undersampled k-space data. While the underlying models could potentially be adapted to process data originating from DICOM files, the existing pipeline does not include direct DICOM file reading or conversion utilities. Generating DICOM-compliant output files from the reconstructed images is also a potential future extension but is not implemented in the current version. The focus remains on leveraging the structure and content of the fastMRI HDF5 dataset for training, evaluation, and reconstruction within the application.
+
+\subsection{User Manual}\label{sec:user_manual}
+
+\begin{figure}[ht]
+\begin{center}
+   \includegraphics[width=0.95\linewidth]{Figures/mri_input.png}
+\end{center}
+\caption{MRI Upload Interface on the web application}
+\label{fig}
+\end{figure}
+
+
+The application provides a straightforward interface for uploading undersampled MRI data for reconstruction. The process consists of three main steps as indicated by the navigation panel at the top of the screen:
+\begin{enumerate}
+    \item \textbf{Upload MRI Input}: Users upload their undersampled MRI data in the frequency domain.
+    \item \textbf{Perform Prediction}: The system processes the uploaded data using our deep learning models.
+    \item \textbf{Analyze \& Download Images}: Users can view and save the reconstructed images.
+\end{enumerate}
+
+Users must upload an .h5 file containing an undersampled MRI image in the frequency domain. The file should include a single- or multi-channel array of shape [H, W] or [C, H, W], where:
+\begin{itemize}
+    \item H = Height dimension
+    \item W = Width dimension
+    \item C = Channel dimension (if applicable)
+\end{itemize}
+
+The system offers multiple ways to upload files (browse local file, drag-and-drop or select a demo file from the dropdown menu for testing purposes).
+
+Once uploaded, the file will be processed by the previously described deep learning models to reconstruct high-quality MRI images. The system leverages the attention mechanisms detailed in the Solution section to prioritize clinically relevant features during reconstruction.
+After processing, the reconstructed image will be displayed in the "Analyze \& Download Images" section, where users can examine the quality improvements and download the results for further clinical analysis.
+
+\subsection{Diagrams and Screenshots}
+
+Specific diagrams detailing the evaluated U-Net architectures and attention modules are provided alongside their descriptions in Section II (Figures \ref{fig:unet-baseline}-\ref{fig:agate}). Additional system diagrams are presented below.
+
+\begin{figure}[h]
+\begin{center}
+   \includegraphics[width=0.95\linewidth]{Figures/architecture_diagram.png}
+\end{center}
+   \caption{Architecture diagram for the project}
+\label{fig:architecture_diagram}
+\end{figure}
+
+\begin{figure}[htbp] % Or other placement specifiers like [H] with float package
+    \centering % Center the figure
+    \includegraphics[width=\linewidth]{Figures/unet_cbam.pdf}
+    \caption{U-Net model enhanced with Convolutional Block Attention Modules (CBAM). CBAM blocks are integrated after each convolutional block in the encoder and decoder paths, as well as in the bottleneck.}
+    \label{fig:unet-cbam}
+\end{figure}
+
+\begin{figure}[htbp] % Or other placement specifiers like [H] with float package
+    \centering % Center the figure
+    \includegraphics[width=\linewidth]{Figures/cbam_block.pdf}
+    \caption{The Convolutional Block Attention Module (CBAM) architecture. Input features are refined sequentially, first by the Channel Attention module (using adaptive pooling and ConvBlocks) and then by the Spatial Attention module (using channel pooling, concatenation, and convolution).}
+    \label{fig:cbam}
+\end{figure}
+
+\begin{figure}[htbp] % Or other placement specifiers like [H] with float package
+    \centering % Center the figure
+    \includegraphics[width=\linewidth]{Figures/unet_agate.pdf}
+    \caption{Diagram of the Attention U-Net. Skip connection features (x) from the encoder and the gating signal (g) from the up-sampled decoder path feed into Attention Gates (AG). The resulting attended features ($x \cdot \alpha$) are concatenated with the gating signal (g) before entering the decoder's convolutional blocks (Conv+IN+LReLU). The encoder uses Average Pooling (AP).}
+    \label{fig:unet-agate}
+\end{figure}
+
+\begin{figure}[htbp] % Or other placement specifiers like [H] with float package
+    \centering % Center the figure
+    \includegraphics[width=\linewidth]{Figures/agate.pdf}
+    \caption{Detailed architecture of the Attention Gate (AG). The gating signal (from Decoder $g$) and skip connection (from Encoder $x$) are transformed ($W_g, W_x$), added, activated (ReLU), and further processed ($\psi$, Sigmoid) to compute the attention map $\alpha$. The output is the element-wise product of the original $x$ and $\alpha$.}
+    \label{fig:agate}
+\end{figure}
+
+\end{document}

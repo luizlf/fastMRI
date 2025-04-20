@@ -1,0 +1,117 @@
+\documentclass[tikz, border=0pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes.geometric, arrows.meta, calc, backgrounds, fit}
+
+\begin{document}
+
+% Define layers: background for skips and boxes, nodes for shapes, main for forward arrows
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{nodes}
+\pgfdeclarelayer{main}
+\pgfsetlayers{background,nodes,main}
+
+\begin{tikzpicture}[scale=0.8, transform shape,
+    node distance=0.6cm and 0.5cm, % Compact vertical and horizontal distance
+    conv/.style={rectangle, draw, minimum width=2cm, minimum height=0.7cm, fill=blue!20, text centered, inner sep=2pt}, % Compact size
+    pool/.style={circle, draw, minimum size=0.7cm, fill=red!30, text centered}, % Compact size
+    up/.style={circle, draw, minimum size=0.5cm, fill=green!30, text centered}, % Compact size
+    concat/.style={rectangle, draw, dashed, minimum width=0.7cm, minimum height=0.6cm, fill=yellow!30, text centered, inner sep=1pt}, % Compact size
+    final/.style={rectangle, draw, minimum width=2cm, minimum height=0.7cm, fill=gray!20, text centered, inner sep=2pt}, % Compact size
+    arrow/.style={-{Latex[length=1.5mm, width=1mm]}}, % Smaller arrowheads
+    skip/.style={-{Latex[length=1.5mm, width=1mm]}, dashed, bend left=45},
+    skipr/.style={-{Latex[length=1.5mm, width=1mm]}, dashed, bend right=45},
+    path_bg/.style={rectangle, draw=gray, dashed, rounded corners, fill=black!5, fill opacity=0.3, inner sep=0.3cm} % Style for background fit nodes
+]
+
+% --- Place all nodes onto the 'nodes' layer ---
+\begin{pgfonlayer}{nodes}
+    % Input - Repositioned above enc1
+    \node (input) [conv, minimum width=1.2cm, fill=white] {Input (1)};
+
+    % Encoder Path (Horizontal) - enc1 now below input
+    \node (enc1) [conv, below=of input] {ConvBlock (64)};
+    \coordinate (enc1_mid) at ($(enc1.east)+(0.25cm,0)$); % Compact offset
+    \node (pool1) [pool, right=of enc1_mid] {MP};
+    \node (enc2) [conv, below=of enc1] {ConvBlock (128)};
+    \coordinate (enc2_mid) at ($(enc2.east)+(0.25cm,0)$); % Compact offset
+    \node (pool2) [pool, right=of enc2_mid] {MP};
+    \node (enc3) [conv, below=of enc2] {ConvBlock (256)};
+    \coordinate (enc3_mid) at ($(enc3.east)+(0.25cm,0)$); % Compact offset
+    \node (pool3) [pool, right=of enc3_mid] {MP};
+
+    % Bottleneck
+
+    % Decoder Path (Horizontal) - Increased spacing from bottleneck
+    \node (bottleneck) [conv, below=0.75 cm of enc3] {ConvBlock (512)};
+    \node (up3) [up, left=1.2 cm of bottleneck] {Up}; % Increased distance
+    \node (concat3) [concat, left=of up3] {Cat};
+    \node (dec3) [conv, left=of concat3] {ConvBlock (256)};
+
+    \node (up2) [up, above=of dec3] {Up};
+    \node (concat2) [concat, left=of up2] {Cat};
+    \node (dec2) [conv, left=of concat2] {ConvBlock (128)};
+
+    \node (up1) [up, above=of dec2] {Up};
+    \node (concat1) [concat, left=of up1] {Cat};
+    \node (dec1) [conv, left=of concat1] {ConvBlock (64)};
+
+    % Output
+    \node (output) [final, above=of dec1] {1x1 Conv (1)};
+    \node (output_img) [conv, above=of output, minimum width=1.2cm, fill=white] {Output (1)}; % Compact size
+
+    % Labels (ConvBlock details only) - Moved above labels to below
+    \node[below=-0.05cm of enc1, font=\scriptsize] {2x(Conv+BN+ReLU)};
+    \node[below=-0.05cm of enc2, font=\scriptsize] {2x(Conv+BN+ReLU)};
+    \node[below=-0.05cm of enc3, font=\scriptsize] {2x(Conv+BN+ReLU)};
+    \node (bottleneck_label)[below=-0.05cm of bottleneck, font=\scriptsize] {2x(Conv+BN+ReLU)};
+    \node[below=-0.2cm of bottleneck_label, font=\scriptsize]{Bottleneck};
+    \node[below=-0.05cm of dec1, font=\scriptsize] {2x(Conv+BN+ReLU)};
+    \node[below=-0.05cm of dec2, font=\scriptsize] {2x(Conv+BN+ReLU)};
+    \node[below=-0.05cm of dec3, font=\scriptsize] {2x(Conv+BN+ReLU)};
+
+\end{pgfonlayer}
+% --- End of nodes layer ---
+
+% --- Place skip connections and background boxes onto the 'background' layer ---
+\begin{pgfonlayer}{background}
+    % Skip Connections (Curved)
+    \draw[skipr] (enc3.west) .. controls +(west:3.0cm) and +(north:1.4cm) .. (concat3.north);
+    \draw [skipr] (enc2.west) .. controls +(west:7.0cm) and +(north:1.4cm) .. (concat2.north);
+    \draw [skipr] (enc1.west) .. controls +(west:11.0cm) and +(north:1.4cm) .. (concat1.north);
+
+    % Background Rectangles using fit, EXCLUDING bottleneck from boxes
+    \node[path_bg, fit= (input) (enc1) (pool1) (enc2) (pool2) (enc3) (pool3), label={[font=\small, anchor=south]north:Contracting Path (Encoder)}] (encoder_box) {};
+    \node[path_bg, fit=(output_img) (output) (dec1) (concat1) (up1) (dec2) (concat2) (up2) (dec3) (concat3) (up3), label={[font=\small, anchor=south]north:Expanding Path (Decoder)}] (decoder_box) {};
+
+\end{pgfonlayer}
+% --- End of background layer ---
+
+% --- Place main connections onto the 'main' layer (drawn last) ---
+\begin{pgfonlayer}{main}
+    % Connections - Encoder
+    \draw [arrow] (input) -- (enc1);
+    \draw [arrow] (enc1) -- (pool1);
+    \draw [arrow] (pool1) -- (enc2.east); % Connect to right side
+    \draw [arrow] (enc2) -- (pool2);
+    \draw [arrow] (pool2) -- (enc3.east); % Connect to right side
+    \draw [arrow] (enc3) -- (pool3);
+    \draw [arrow] (pool3) -- (bottleneck.east); % Connect to right side
+
+    % Connections - Decoder
+    \draw [arrow] (bottleneck) -- (up3);
+    \draw [arrow] (up3) -- (concat3);
+    \draw [arrow] (concat3) -- (dec3);
+    \draw [arrow] (dec3) -- (up2);
+    \draw [arrow] (up2) -- (concat2);
+    \draw [arrow] (concat2) -- (dec2);
+    \draw [arrow] (dec2) -- (up1);
+    \draw [arrow] (up1) -- (concat1);
+    \draw [arrow] (concat1) -- (dec1);
+    \draw [arrow] (dec1) -- (output);
+    \draw [arrow] (output) -- (output_img);
+\end{pgfonlayer}
+% --- End of main layer ---
+
+\end{tikzpicture}
+
+\end{document}

@@ -1,0 +1,130 @@
+\documentclass[tikz, border=0pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes.geometric, arrows.meta, calc, backgrounds, fit}
+
+\begin{document}
+
+% Define layers: background for skips and boxes, nodes for shapes, main for forward arrows
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{nodes}
+\pgfdeclarelayer{main}
+\pgfsetlayers{background,nodes,main}
+
+\begin{tikzpicture}[scale=0.8, transform shape,
+    node distance=0.6cm and 0.5cm, % Match baseline vertical and horizontal distance
+    conv/.style={rectangle, draw, minimum width=2cm, minimum height=0.7cm, fill=blue!20, text centered, inner sep=2pt},
+    pool/.style={circle, draw, minimum size=0.7cm, fill=red!30, text centered},
+    up/.style={circle, draw, minimum size=0.5cm, fill=green!30, text centered}, % Match baseline size
+    concat/.style={rectangle, draw, dashed, minimum width=0.7cm, minimum height=0.6cm, fill=yellow!30, text centered, inner sep=1pt}, % Match baseline size
+    final/.style={rectangle, draw, minimum width=2cm, minimum height=0.7cm, fill=gray!20, text centered, inner sep=2pt},
+    cbam/.style={rectangle, draw, rounded corners, minimum width=1.2cm, minimum height=0.6cm, fill=orange!30, text centered, inner sep=1pt}, % CBAM style
+    arrow/.style={-{Latex[length=1.5mm, width=1mm]}}, % Smaller arrowheads
+    skipr/.style={-{Latex[length=1.5mm, width=1mm]}, dashed, bend right=45},
+    path_bg/.style={rectangle, draw=gray, dashed, rounded corners, fill=black!5, fill opacity=0.3, inner sep=0.3cm} % Style for background fit nodes
+]
+
+% --- Place all nodes onto the 'nodes' layer ---
+\begin{pgfonlayer}{nodes}
+    % Input - Repositioned above enc1
+    \node (input) [conv, minimum width=1.2cm, fill=white] {Input (1)};
+
+    % Encoder Path (Vertical) with CBAM
+    \node (enc1) [conv, below=of input] {ConvBlock (64)};
+    \node (cbam1_down) [cbam, right=of enc1] {CBAM}; % CBAM below ConvBlock
+    \node (pool1) [pool, right=of cbam1_down] {MP};
+
+    \node (enc2) [conv, below=of enc1] {ConvBlock (128)}; % Increased spacing to fit CBAM
+    \node (cbam2_down) [cbam, right=of enc2] {CBAM}; % CBAM below ConvBlock
+    \node (pool2) [pool, right=of cbam2_down] {MP};
+
+    \node (enc3) [conv, below=of enc2] {ConvBlock (256)}; % Increased spacing to fit CBAM
+    \node (cbam3_down) [cbam, right=of enc3] {CBAM}; % CBAM below ConvBlock
+    \node (pool3) [pool, right=of cbam3_down] {MP};
+
+    % Bottleneck with CBAM
+    \node (bottleneck) [conv, below=0.75cm of cbam3_down] {ConvBlock (512)}; % Increased spacing
+    \node (cbam_bn) [cbam, left=of bottleneck] {CBAM}; % CBAM below Bottleneck
+
+    % Decoder Path (Vertical) with CBAM
+    \node (up3) [up, left=2.0cm of cbam_bn] {Up}; % Match baseline positioning relative to bottleneck
+    \node (concat3) [concat, left=of up3] {Cat};
+    \node (cbam3_up) [cbam, left=of concat3] {CBAM}; % CBAM below concat
+    \node (dec3) [conv, left=of cbam3_up] {ConvBlock (256)};
+
+    \node (up2) [up, above=of cbam3_up] {Up};
+    \node (concat2) [concat, left=of up2] {Cat};
+    \node (cbam2_up) [cbam, left=of concat2] {CBAM}; % CBAM below concat
+    \node (dec2) [conv, left=of cbam2_up] {ConvBlock (128)}; % Position relative to CBAM
+
+    \node (up1) [up, above=of cbam2_up] {Up};
+    \node (concat1) [concat, left=of up1] {Cat};
+    \node (cbam1_up) [cbam, left=of concat1] {CBAM}; % CBAM below concat
+    \node (dec1) [conv, left=of cbam1_up] {ConvBlock (64)}; % Position relative to CBAM
+
+    % Output
+    \node (output) [final, above=of dec1] {1x1 Conv (1)};
+    \node (output_img) [conv, above=of output, minimum width=1.2cm, fill=white] {Output (1)};
+
+    % Labels - Below nodes, small font
+    \node[below=-0.05cm of enc1, font=\scriptsize] {2x(Conv+BN+ReLU)};
+    \node[below=-0.05cm of enc2, font=\scriptsize] {2x(Conv+BN+ReLU)};
+    \node[below=-0.05cm of enc3, font=\scriptsize] {2x(Conv+BN+ReLU)};
+    \node (bn_label1)[below=-0.05cm of bottleneck, font=\scriptsize] {2x(Conv+BN+ReLU)};
+    \node (bn_label2)[below=-0.2cm of bn_label1, font=\scriptsize]{Bottleneck};
+    \node[below=-0.05cm of dec1, font=\scriptsize] {2x(Conv+BN+ReLU)}; % Below up-CBAM
+    \node[below=-0.05cm of dec2, font=\scriptsize] {2x(Conv+BN+ReLU)}; % Below up-CBAM
+    \node[below=-0.05cm of dec3, font=\scriptsize] {2x(Conv+BN+ReLU)}; % Below up-CBAM
+
+\end{pgfonlayer}
+% --- End of nodes layer ---
+
+% --- Place skip connections and background boxes onto the 'background' layer ---
+\begin{pgfonlayer}{background}
+    % Skip Connections (Curved) - Originate from encX.west, connect to concatX.north (like baseline)
+    \draw[skipr] (enc3.west) .. controls +(west:3.0cm) and +(north:1.4cm) .. (concat3.north);
+    \draw [skipr] (enc2.west) .. controls +(west:6.0cm) and +(north:1.4cm) .. (concat2.north);
+    \draw [skipr] (enc1.west) .. controls +(west:9.5cm) and +(north:1.4cm) .. (concat1.north);
+
+    % Background Rectangles using fit - Excluding bottleneck, including CBAMs, labels north
+    \node[path_bg, fit=(input) (enc1) (cbam1_down) (pool1) (enc2) (cbam2_down) (pool2) (enc3) (cbam3_down) (pool3), label={[font=\small, anchor=south]north:Contracting Path (Encoder)}] (encoder_box) {};
+    \node[path_bg, fit=(output_img) (output) (dec1) (cbam1_up) (concat1) (up1) (dec2) (cbam2_up) (concat2) (up2) (dec3) (cbam3_up) (concat3) (up3), label={[font=\small, anchor=south]north:Expanding Path (Decoder)}] (decoder_box) {};
+
+\end{pgfonlayer}
+% --- End of background layer ---
+
+% --- Place main connections onto the 'main' layer (drawn last) ---
+\begin{pgfonlayer}{main}
+    % Connections - Encoder (Input -> Enc -> CBAM -> Pool -> Next Enc)
+    \draw [arrow] (input) -- (enc1);
+    \draw [arrow] (enc1) -- (cbam1_down);
+    \draw [arrow] (cbam1_down) -- (pool1);
+    \draw [arrow] (pool1) -- (enc2.north east);
+    \draw [arrow] (enc2) -- (cbam2_down);
+    \draw [arrow] (cbam2_down) -- (pool2);
+    \draw [arrow] (pool2) -- (enc3.north east);
+    \draw [arrow] (enc3) -- (cbam3_down);
+    \draw [arrow] (cbam3_down) -- (pool3);
+    \draw [arrow] (pool3) -- (bottleneck.north);
+    \draw [arrow] (bottleneck) -- (cbam_bn); % Bottleneck to its CBAM
+
+    % Connections - Decoder (Bottleneck CBAM -> Up -> Cat -> CBAM -> Dec -> Next Up)
+    \draw [arrow] (cbam_bn) -- (up3); % From bottleneck CBAM
+    \draw [arrow] (up3) -- (concat3);
+    \draw [arrow] (concat3) -- (cbam3_up); % To decoder CBAM
+    \draw [arrow] (cbam3_up) -- (dec3);
+    \draw [arrow] (dec3) -- (up2);
+    \draw [arrow] (up2) -- (concat2);
+    \draw [arrow] (concat2) -- (cbam2_up); % To decoder CBAM
+    \draw [arrow] (cbam2_up) -- (dec2);
+    \draw [arrow] (dec2) -- (up1);
+    \draw [arrow] (up1) -- (concat1);
+    \draw [arrow] (concat1) -- (cbam1_up); % To decoder CBAM
+    \draw [arrow] (cbam1_up) -- (dec1);
+    \draw [arrow] (dec1) -- (output);
+    \draw [arrow] (output) -- (output_img);
+\end{pgfonlayer}
+% --- End of main layer ---
+
+\end{tikzpicture}
+
+\end{document}

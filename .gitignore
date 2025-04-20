@@ -35,3 +35,4 @@ old_lightning_logs
 *.bmp
 *.tiff
 *.ico
+*.parquet
