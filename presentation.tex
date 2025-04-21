@@ -1,0 +1,232 @@
+\documentclass{beamer}
+\usepackage{graphicx} % Required for including images
+\usepackage{amsmath}  % Required for math formulas
+\usepackage{url}
+
+% Choose a theme
+\usetheme{Madrid} % Or any other theme like Boadilla, Warsaw, etc.
+
+\title[MRI Reconstruction Acceleration]{Accelerating MRI Reconstruction with Deep Learning}
+\subtitle{Focusing on Clinically Relevant Regions}
+\author[Santos \& Baraldo]{Luiz Santos \and Anderson Baraldo}
+\institute[Gatech - CS 6440]{Georgia Institute of Technology \\ CS 6440}
+\date{April 21st, 2025}
+
+\begin{document}
+
+% --- Title Frame ---
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% --- Introduction: Team & Problem ---
+\begin{frame}{Introduction: Team and Project Goal}
+  \textbf{Team:}
+  \begin{itemize}
+    \item Luiz Santos: UX \& Project Management, Backend Developer
+    \item Anderson Baraldo: Frontend \& Backend Developer
+  \end{itemize}
+  \vfill
+  \textbf{Problem:}
+  \begin{itemize}
+    \item MRI scans are slow $\rightarrow$ Patient discomfort, motion artifacts, limited access.
+    \item Need for faster scans without sacrificing diagnostic quality.
+  \end{itemize}
+  \vfill
+  \textbf{Project Goal:}
+  \begin{itemize}
+    \item Accelerate MRI reconstruction using Deep Learning.
+    \item Explore enhancing quality in clinically relevant regions using annotations.
+  \end{itemize}
+\end{frame}
+
+% --- Dataset & Challenges ---
+\begin{frame}{Dataset and Challenges}
+  \begin{columns}[T]
+    \begin{column}{0.65\textwidth}
+      \textbf{Datasets:}
+      \begin{itemize}
+        \item \textbf{fastMRI}: Raw k-space data from knee MRIs.
+        \item \textbf{fastMRI+}: Adds clinical annotations (bounding boxes) to fastMRI.
+      \end{itemize}
+      \textbf{Core Challenge: Undersampling Artifacts}
+      \begin{itemize}
+        \item Faster scans require undersampling k-space (frequency domain).
+        \item Missing k-space data $\rightarrow$ \textbf{Global} aliasing artifacts in the image domain (due to Fourier Transform properties).
+        \item Simple image-domain fixes are insufficient.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.35\textwidth}
+      \centering
+      \includegraphics[width=0.85\linewidth]{Figures/masked_kspace.png} \\
+      \vspace{1mm}
+      \tiny Example k-space data with simulated undersampling mask (black areas = missing data).
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% --- Hypothesis & ROI-Weighted Loss ---
+\begin{frame}{Initial Hypothesis: ROI-Weighted Loss}
+  \textbf{Hypothesis:} Focusing the model on annotated Regions of Interest (ROI) will improve reconstruction quality in diagnostically important areas.
+  \vfill
+  \textbf{Approach: ROI-Weighted Loss Function}
+  \[
+    L_{total} = \frac{L_{image} + \alpha \cdot L_{ROI}}{2}, \quad
+    \alpha = \frac{\text{image pixels}}{\text{ROI pixels}}
+  \]
+  This loss term explicitly increases the penalty for errors within the annotated ROI mask.
+\end{frame}
+
+% --- Architectures Evaluated ---
+\begin{frame}{Architectures Explored}
+  Compared several U-Net variants to test hypothesis and explore attention:
+  \begin{columns}[T] % Align tops
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+          \item Baseline U-Net
+          \item U-Net + ROI Loss
+          \item CBAM U-Net
+          \item Attention Gates (AG) U-Net
+          \item Full Attention (CBAM + AG)
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.95\linewidth]{Figures/unet_baseline.pdf} \\
+        \tiny Baseline U-Net Structure
+    \end{column}
+  \end{columns}
+  \vspace{2mm}
+  Attention mechanisms (CBAM, AG) were explored as data-driven alternatives to explicit ROI weighting.
+  
+\end{frame}
+
+% --- Attention Mechanism Details ---
+\begin{frame}{Attention Mechanisms: Integration \& Details}
+  \centering
+  \begin{columns}[T,totalwidth=\textwidth] % Ensure columns span the full width
+    \begin{column}{0.48\textwidth}
+      {\footnotesize \textbf{CBAM Enhanced U-Net}} \\
+      \includegraphics[width=\linewidth]{Figures/unet_cbam.pdf}
+    \end{column}
+    \hfill % Add space between columns
+    \begin{column}{0.48\textwidth}
+      {\footnotesize \textbf{Attention Gates U-Net}} \\
+      \includegraphics[width=\linewidth]{Figures/unet_agate.pdf}
+    \end{column}
+  \end{columns}
+  
+  \vspace{2mm} % Add a small vertical space
+
+  \begin{columns}[T,totalwidth=\textwidth]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize \textbf{CBAM Block Detail}} \\
+      \includegraphics[width=\linewidth]{Figures/cbam_block.pdf}
+    \end{column}
+    \hfill
+    \begin{column}{0.48\textwidth}
+      {\footnotesize \textbf{Attention Gate Detail}} \\
+      \includegraphics[width=\linewidth]{Figures/agate.pdf}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% --- Visual Reconstruction Example ---
+\begin{frame}{Visual Reconstruction Examples}
+  \centering
+  \includegraphics[width=0.95\textwidth]{Figures/comp_grid.png}
+  \vspace{1mm}
+  \tiny Example comparison grid (from TensorBoard) showing Original, Reconstruction, Error Map, and Original+ROI for two models.
+\end{frame}
+
+% --- Results: Overall Image Quality ---
+\begin{frame}{Results: Overall Image Reconstruction}
+  \textbf{Key Finding:} Explicit ROI-weighted loss did \textbf{not} improve (and slightly worsened) overall image reconstruction quality.
+  \vfill
+  \begin{columns}[T]
+      \begin{column}{0.5\textwidth}
+          \centering \textbf{L1 Loss} \\
+          \includegraphics[width=\linewidth]{Figures/validation_l1_loss_image_loss_train_roi_comparison.png}
+      \end{column}
+      \begin{column}{0.5\textwidth}
+          \centering \textbf{L1+SSIM Loss} \\
+          \includegraphics[width=\linewidth]{Figures/validation_l1ssim_loss_image_loss_train_roi_comparison.png}
+      \end{column}
+  \end{columns}
+  \tiny Left: No ROI Loss Term. Right: With ROI Loss Term. Note slightly higher final loss on the right plots.
+\end{frame}
+
+% --- Results: ROI-Specific Quality ---
+\begin{frame}{Results: ROI-Specific Reconstruction}
+  \textbf{Observation:} Attention Gates (AG) showed better performance \textit{within} the ROI compared to other models, regardless of ROI loss term.
+  \vfill
+  \begin{columns}[T]
+      \begin{column}{0.5\textwidth}
+          \centering \textbf{ROI L1 Loss} \\
+          \includegraphics[width=\linewidth]{Figures/validation_l1_loss_roi_loss_train_roi_comparison.png}
+      \end{column}
+      \begin{column}{0.5\textwidth}
+          \centering \textbf{ROI L1+SSIM Loss} \\
+          \includegraphics[width=\linewidth]{Figures/validation_l1ssim_loss_roi_loss_train_roi_comparison.png}
+      \end{column}
+  \end{columns}
+  \tiny Left: No ROI Loss Term. Right: With ROI Loss Term. Note lower final loss for AG (orange line). Suggests AG is better at learning local features.
+\end{frame}
+
+% --- Discussion Summary ---
+\begin{frame}{Discussion: Why ROI Loss Failed}
+  \begin{itemize}
+    \item \textbf{Fundamental Issue:} Undersampling is in k-space (frequency), causing \textit{global} image artifacts.
+    \item Forcing pixel-level accuracy in an image-domain ROI conflicts with solving the global k-space problem.
+    \item Creates unnatural results / hinders generalization.
+    \item \textbf{Attention Models:} More promising as they learn relevant features (potentially global and local) in a data-driven way. AG showed some local benefit.
+  \end{itemize}
+\end{frame}
+
+% --- Project Architecture ---
+\begin{frame}{Project Architecture}
+  \centering
+  \includegraphics[width=0.9\linewidth]{Figures/architecture_diagram.png}
+  \vfill
+  Key Components:
+  \begin{itemize}
+      \item Data Pipeline (HDF5 k-space input)
+      \item PyTorch Lightning Models (U-Net variants)
+      \item Experimentation Framework (Hyperparameter tuning, logging)
+      \item H2O Wave Web Application (for Demo)
+  \end{itemize}
+\end{frame}
+
+% --- Demo ---
+\begin{frame}{Live Demonstration}
+  \begin{center}
+    \Huge Live Demo
+  \end{center}
+\end{frame}
+
+% --- Future Work ---
+\begin{frame}{Future Work}
+  \begin{itemize}
+    \item \textbf{Adaptive ROI Weighting:} More nuanced focus during training.
+    \item \textbf{Uncertainty Estimation:} Highlight less reliable reconstruction areas for clinicians.
+    \item \textbf{Multi-Task Learning:} Optimize for reconstruction AND specific diagnostic tasks.
+    \item \textbf{Better Datasets:} Need more comprehensive, standardized annotated MRI datasets.
+    \item \textbf{Generalizability:} Test attention mechanisms across different anatomies/protocols.
+    \item \textbf{DICOM Integration:} Add capability to process/output DICOM files.
+  \end{itemize}
+\end{frame}
+
+% --- Q&A / Thank You ---
+\begin{frame}
+  \begin{center}
+    \Huge Thank You
+    \vfill
+    \large \textbf{Links:} \\
+    App: \url{https://health-project-gr92-178a1fec0886.herokuapp.com/} \\
+    Code: \url{https://github.com/luizlf/fastMRI} \\
+    Paper Video: \url{https://youtu.be/XXXXXXXX} (Update Link!)
+  \end{center}
+\end{frame}
+
+
+\end{document}
